@@ -39,6 +39,7 @@ public class HapiVerifier {
         
         checks.add( new CapabilitiesCheck( server ) );
         checks.add( new CatalogCheck( server ) );
+        checks.add( new InfoCheck( server ) );
         
         for ( Check check : checks ) {
             doCheck( results, check );
@@ -115,7 +116,7 @@ public class HapiVerifier {
     }
     
     public static void main( String[] args ) throws MalformedURLException, FileNotFoundException {
-        try (PrintStream out = new PrintStream(new File("/tmp/out.hapicheck.html"))) {
+        try (PrintWriter out = new PrintWriter(new File("/tmp/out.hapicheck.html"))) {
             doAllServers(out);
         }
     }
