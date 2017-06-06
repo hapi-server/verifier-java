@@ -4,6 +4,8 @@ package com.cottagesystems;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -48,7 +50,9 @@ public class HapiVerifier {
         return status==0 ? "#38c550" : "#c55038";
     }
     
-    public static void doAllServers( PrintStream out ) throws MalformedURLException {
+    public static void doAllServers( Writer outw ) throws MalformedURLException {
+        
+        PrintWriter out= new PrintWriter(outw);
         
         String css= ".CellWithComment{\n" +
 "  position:relative;\n" +
@@ -103,11 +107,16 @@ public class HapiVerifier {
         }
         out.println("</table>");
         out.println("</body>");
+  
+    }
+            
+    public static void doAllServers( PrintStream out ) throws MalformedURLException {
+        doAllServers( new PrintWriter( out ) );
     }
     
     public static void main( String[] args ) throws MalformedURLException, FileNotFoundException {
-        PrintStream out= new PrintStream(new File("/tmp/out.hapicheck.html"));
-        doAllServers(out);
-        out.close();
+        try (PrintStream out = new PrintStream(new File("/tmp/out.hapicheck.html"))) {
+            doAllServers(out);
+        }
     }
 }
