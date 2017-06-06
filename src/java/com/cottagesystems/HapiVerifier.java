@@ -37,9 +37,10 @@ public class HapiVerifier {
         LinkedHashMap<String,CheckStatus> results= new LinkedHashMap<>();
         List<Check> checks= new ArrayList<>();
         
-        checks.add( new CapabilitiesCheck( server ) );
-        checks.add( new CatalogCheck( server ) );
-        checks.add( new InfoCheck( server ) );
+        //checks.add( new CapabilitiesCheck( server ) );
+        //checks.add( new CatalogCheck( server ) );
+        //checks.add( new InfoCheck( server ) );
+        checks.add( new DataCheck( server ) );
         
         for ( Check check : checks ) {
             doCheck( results, check );

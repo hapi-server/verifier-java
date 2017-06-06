@@ -9,7 +9,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -19,6 +18,8 @@ public abstract class Check {
     
     URL hapi;
     String name;
+    
+    public static final Logger logger= Logger.getLogger("HapiVerifier");
     
     public Check( URL hapi, String name ) {
         this.hapi= hapi;
