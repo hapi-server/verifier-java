@@ -32,7 +32,11 @@ public class CapabilitiesCheck extends Check {
         while ( ( s=read.readLine() )!=null ) {
             b.append(s).append("\n");
         }
-        new JSONObject(b.toString());
+        JSONObject jo= new JSONObject(b.toString());
+        jo.getString("HAPI");
+        jo.get("status");
+        jo.getJSONArray("outputFormats");
+        
         return new CheckStatus(0);
     }
 }

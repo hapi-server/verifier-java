@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,7 +29,14 @@ public class CatalogCheck extends Check {
         while ( ( s=read.readLine() )!=null ) {
             b.append(s).append("\n");
         }
-        new JSONObject(b.toString());
+        JSONObject jo= new JSONObject(b.toString());
+        jo.getString("HAPI");
+        jo.getString("status");
+        JSONArray ja= jo.getJSONArray("catalog");
+        for ( int i=0; i<ja.length(); i++ ) {
+            JSONObject jo1= ja.getJSONObject(i);
+            jo1.getString("id");
+        }
         return new CheckStatus(0);
     }
 }
