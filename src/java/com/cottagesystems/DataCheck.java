@@ -36,9 +36,10 @@ public class DataCheck extends Check {
             String s;
             while ( ( s=read.readLine() )!=null ) {
                 b.append(s).append("\n");
-                len+= s.length()+1;
+                len+= 1;
             }
         }
+        logger.log(Level.INFO, "Records received: {0}", len);
         if ( len>0 ) {
             return new CheckStatus(0);
         } else {
