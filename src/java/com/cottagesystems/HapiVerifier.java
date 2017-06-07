@@ -97,6 +97,8 @@ public class HapiVerifier {
     
     public static void doAllServers( File root ) throws MalformedURLException, FileNotFoundException {
          
+        long t0= System.currentTimeMillis();
+                
         if ( !root.exists() ) {
             if ( !root.mkdirs() ) {
                 throw new IllegalArgumentException("unable to mkdir "+root);
@@ -106,8 +108,8 @@ public class HapiVerifier {
         try (PrintWriter out = new PrintWriter( new File( root, "index.html" ) )) {
             List<URL> servers= new ArrayList<>();
             servers.add( new URL("http://jfaden.net/HapiServerDemo/hapi") );
-            servers.add( new URL("http://datashop.elasticbeanstalk.com/hapi") );
-            servers.add( new URL("http://mag.gmu.edu/TestData/hapi") );
+            //servers.add( new URL("http://datashop.elasticbeanstalk.com/hapi") );
+            //servers.add( new URL("http://mag.gmu.edu/TestData/hapi") );
             
             out.printf("<html>");
             out.printf("<body><table border='1' >" );
@@ -164,6 +166,8 @@ public class HapiVerifier {
             out.println("</table>");
             
             out.println("<a href=\"index.jsp\">manage</a>");
+            
+            out.println("<small>Complete test suite calculated in "+ String.format( "%.2f", (System.currentTimeMillis()-t0)/60000. ) + " minutes." );
             out.println("</body>");
         }
     }
