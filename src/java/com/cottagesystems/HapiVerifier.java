@@ -83,6 +83,7 @@ public class HapiVerifier {
         checks.add( new CatalogCheck( server ) );
         checks.add( new InfoCheck( server ) );
         checks.add( new DataCheck( server ) );
+        checks.add( new PartialDataCheck( server ) );
         
         for ( Check check : checks ) {
             if ( results.containsKey(check.getName() ) ) {
@@ -173,16 +174,13 @@ public class HapiVerifier {
         Pattern url= Pattern.compile("(http|ftp|https):\\/\\/[\\w\\-_]+(\\.[\\w\\-_]+)+([\\w\\-\\.,@?^=%&amp;:/~\\+#]*[\\w\\-\\@?^=%&amp;/~\\+#])?");
         
         for ( String s: ss ) {
-            if ( s.contains("http://jfaden.net/HapiServerDemo/hapi/catalog") ) {
-                System.err.println("here");
-            }
             Matcher m= url.matcher(s);
             int more= 0;
             while ( m.find() ) {
                 builder.append( s.substring(0,m.start()) );
                 more= m.end();
                 String surl= s.substring(m.start(),more);
-                builder.append("<a href='").append(surl).append("'>").append(surl).append("</a>");
+                builder.append("<a href='").append(surl).append("'>").append(surl.replaceAll("\\&", "&amp;") ).append("</a>");
             }
             builder.append( s.substring(more) ); // I know there's a matcher field for this, just can't find it...
             builder.append( "<br>\n");
