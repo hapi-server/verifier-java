@@ -19,6 +19,8 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -143,7 +145,7 @@ public class HapiVerifier {
                         out2.println( c.getMessage() );
                         out2.println( "<br>" );
                         out2.println( "<h2>Log output</h2>");
-                        out2.println( c.getLog().replaceAll("\n", "<br>\n" ) );
+                        out2.println( makeHtml( c.getLog() ) );
                     }
                     String ball= c.getStatus()==0 ? "blue" : "red";
                     out.printf("<td color=\"%s\"><a href=\"%s/%s.html\"><img src='%s.gif'></a></td>", colorFor( c.getStatus() ), serverName, e.getKey(), ball );
@@ -157,6 +159,30 @@ public class HapiVerifier {
             out.println("<a href=\"index.jsp\">manage</a>");
             out.println("</body>");
         }
+    }
+    
+    private static String makeHtml( String raw ) {
+        StringBuilder builder= new StringBuilder();
+        String[] ss= raw.split("\n");
+        Pattern url= Pattern.compile("(http|ftp|https):\\/\\/[\\w\\-_]+(\\.[\\w\\-_]+)+([\\w\\-\\.,@?^=%&amp;:/~\\+#]*[\\w\\-\\@?^=%&amp;/~\\+#])?");
+        
+        for ( String s: ss ) {
+            if ( s.contains("http://jfaden.net/HapiServerDemo/hapi/catalog") ) {
+                System.err.println("here");
+            }
+            Matcher m= url.matcher(s);
+            int more= 0;
+            while ( m.find() ) {
+                builder.append( s.substring(0,m.start()) );
+                more= m.end();
+                String surl= s.substring(m.start(),more);
+                builder.append("<a href='").append(surl).append("'>").append(surl).append("</a>");
+            }
+            builder.append( s.substring(more) ); // I know there's a matcher field for this, just can't find it...
+            builder.append( "<br>\n");
+        }
+        
+        return builder.toString();
     }
             
     public static void doAllServers( PrintStream out ) throws MalformedURLException, FileNotFoundException, IOException {
