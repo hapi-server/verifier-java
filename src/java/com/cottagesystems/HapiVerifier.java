@@ -103,58 +103,60 @@ public class HapiVerifier {
             }
         }
         
-        PrintWriter out= new PrintWriter( new File( root, "index.html" ) );
-        
-        List<URL> servers= new ArrayList<>();
-        servers.add( new URL("http://jfaden.net/HapiServerDemo/hapi") );
-        servers.add( new URL("http://datashop.elasticbeanstalk.com/hapi") );
-        servers.add( new URL("http://mag.gmu.edu/TestData/hapi") );
-        
-        out.printf("<html>");
-        out.printf("<body><table border='1' >" );
-        out.printf("<tr><td>Server</td>");
-        Map<String,CheckStatus> check= doChecks(servers.get(0));
-        for ( Entry<String,CheckStatus> e: check.entrySet() ) {
-            out.printf("<td>%s</td>", e.getKey() );
-        }
-        out.printf("</tr>");
-        
-        for ( URL server: servers ) {
+        try (PrintWriter out = new PrintWriter( new File( root, "index.html" ) )) {
+            List<URL> servers= new ArrayList<>();
+            servers.add( new URL("http://jfaden.net/HapiServerDemo/hapi") );
+            servers.add( new URL("http://datashop.elasticbeanstalk.com/hapi") );
+            servers.add( new URL("http://mag.gmu.edu/TestData/hapi") );
             
-            check= doChecks(server);                
-            out.printf("<tr><td>%s</td>\n",server);
-            
-            String serverName= server.getPath().replaceAll("/", "_");
-            serverName= serverName.replaceAll(":","");
-            File serverRoot= new File( root, serverName );
-            if ( !serverRoot.exists() ) {
-                if ( !serverRoot.mkdirs() ) {
-                    throw new IllegalArgumentException("unable to mkdir "+serverRoot);
-                }
-            }
-            
+            out.printf("<html>");
+            out.printf("<body><table border='1' >" );
+            out.printf("<tr><td>Server</td>");
+            Map<String,CheckStatus> check= doChecks(servers.get(0));
             for ( Entry<String,CheckStatus> e: check.entrySet() ) {
-                CheckStatus c= e.getValue();
+                out.printf("<td>%s</td>", e.getKey() );
+            }
+            out.printf("</tr>");
+            
+            for ( URL server: servers ) {
                 
-                try (PrintWriter out2 = new PrintWriter( new File( serverRoot, e.getKey()+".html" ) )) {
-                    out2.println( "<h1>" );
-                    out2.println( c.getMessage() );
-                    out2.println( "</h1>" );
-                    out2.println( "<br>" );
-                    out2.println( c.getLog().replaceAll("\n", "<br>\n" ) );
+                check= doChecks(server);
+                out.printf("<tr><td><a href='%s'>%s</a></td>\n",server,server);
+                
+                String serverName= server.getPath().replaceAll("/", "_");
+                serverName= serverName.replaceAll(":","");
+                File serverRoot= new File( root, serverName );
+                if ( !serverRoot.exists() ) {
+                    if ( !serverRoot.mkdirs() ) {
+                        throw new IllegalArgumentException("unable to mkdir "+serverRoot);
+                    }
                 }
                 
-                out.printf("<td color=\"%s\"><a href=\"%s/%s.html\">%s</a></td>", colorFor( c.getStatus() ), serverName, e.getKey(), c.getStatus() );
+                for ( Entry<String,CheckStatus> e: check.entrySet() ) {
+                    CheckStatus c= e.getValue();
+                    
+                    try (PrintWriter out2 = new PrintWriter( new File( serverRoot, e.getKey()+".html" ) )) {
+                        out2.println( "<h2>" );
+                        out2.println( "Test \""+e.getKey()+"\" on server "+ server );
+                        out2.println( "</h2>" );
+                        out2.println( "Status Code=" + c.getStatus() + "<br>");
+                        out2.println( c.getMessage() );
+                        out2.println( "<br>" );
+                        out2.println( "<h2>Log output</h2>");
+                        out2.println( c.getLog().replaceAll("\n", "<br>\n" ) );
+                    }
+                    String ball= c.getStatus()==0 ? "blue" : "red";
+                    out.printf("<td color=\"%s\"><a href=\"%s/%s.html\"><img src='%s.gif'></a></td>", colorFor( c.getStatus() ), serverName, e.getKey(), ball );
+                    
+                }
+                out.printf("</tr>\n" );
                 
             }
-            out.printf("</tr>\n" );
+            out.println("</table>");
             
+            out.println("<a href=\"index.jsp\">manage</a>");
+            out.println("</body>");
         }
-        out.println("</table>");
-        
-        out.println("<a href=\"index.jsp\">manage</a>");
-        out.println("</body>");
-        out.close();
     }
             
     public static void doAllServers( PrintStream out ) throws MalformedURLException, FileNotFoundException, IOException {
