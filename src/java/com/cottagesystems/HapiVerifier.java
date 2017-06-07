@@ -77,12 +77,15 @@ public class HapiVerifier {
         LinkedHashMap<String,CheckStatus> results= new LinkedHashMap<>();
         List<Check> checks= new ArrayList<>();
         
-        //checks.add( new CapabilitiesCheck( server ) );
-        //checks.add( new CatalogCheck( server ) );
-        //checks.add( new InfoCheck( server ) );
+        checks.add( new CapabilitiesCheck( server ) );
+        checks.add( new CatalogCheck( server ) );
+        checks.add( new InfoCheck( server ) );
         checks.add( new DataCheck( server ) );
         
         for ( Check check : checks ) {
+            if ( results.containsKey(check.getName() ) ) {
+                throw new IllegalArgumentException("check name is used twice: "+check.getClass().getName() );
+            }
             doCheck( results, check );
         }
         return results;
@@ -148,6 +151,8 @@ public class HapiVerifier {
             
         }
         out.println("</table>");
+        
+        out.println("<a href=\"index.jsp\">manage</a>");
         out.println("</body>");
         out.close();
     }
