@@ -3,6 +3,7 @@ package com.cottagesystems;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -13,8 +14,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
 
 /**
  * Check known HAPI servers against a suite of checks.
@@ -26,19 +31,41 @@ public class HapiVerifier {
     
     /**
      * perform the check, adding the result CheckStatus to the collection of results from other tests.
-     * @param results
-     * @param check 
+     * @param results CheckStatus result for each check
+     * @param check the check to perform.
      */
     public static void doCheck( LinkedHashMap<String,CheckStatus> results, Check check ) {
         String checkName= check.getName();
         logger.log(Level.INFO, "-- doCheck {0} --", check.toString());
+        final StringBuilder b= new StringBuilder();
+        Handler h= new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                SimpleFormatter formatter= new SimpleFormatter();
+                String s= formatter.formatMessage(record);
+                b.append(s);
+                b.append("\n");
+            }
+
+            @Override
+            public void flush() {   
+            }
+
+            @Override
+            public void close() throws SecurityException {
+            }
+        };
+        logger.addHandler(h);
         CheckStatus checkStatus;
         try {
             checkStatus= check.doCheck();
         } catch ( Exception ex ) {
             checkStatus= new CheckStatus(1,ex.toString());
         }
+        checkStatus.setLog(b.toString());
+        logger.removeHandler(h);
         results.put( checkName, checkStatus );
+        
     }
     
     /**
@@ -65,43 +92,27 @@ public class HapiVerifier {
         return status==0 ? "#38c550" : "#c55038";
     }
     
-    public static void doAllServers( Writer outw ) throws MalformedURLException {
+    public static void doAllServers( File root ) throws MalformedURLException, FileNotFoundException {
+         
+        if ( !root.exists() ) {
+            if ( !root.mkdirs() ) {
+                throw new IllegalArgumentException("unable to mkdir "+root);
+            }
+        }
         
-        PrintWriter out= new PrintWriter(outw);
+        PrintWriter out= new PrintWriter( new File( root, "index.html" ) );
         
-        String css= ".CellWithComment{\n" +
-"  position:relative;\n" +
-"}\n" +
-"\n" +
-".CellComment{\n" +
-"  display:none;\n" +
-"  position:absolute; \n" +
-"  z-index:100;\n" +
-"  border:1px;\n" +
-"  background-color:white;\n" +
-"  border-style:solid;\n" +
-"  border-width:1px;\n" +
-"  border-color:red;\n" +
-"  padding:3px;\n" +
-"  color:red; \n" +
-"  top:20px; \n" +
-"  left:20px;\n" +
-"}\n" +
-"\n" +
-".CellWithComment:hover span.CellComment{\n" +
-"  display:block;\n" +
-"}";
         List<URL> servers= new ArrayList<>();
         servers.add( new URL("http://jfaden.net/HapiServerDemo/hapi") );
         servers.add( new URL("http://datashop.elasticbeanstalk.com/hapi") );
         servers.add( new URL("http://mag.gmu.edu/TestData/hapi") );
         
         out.printf("<html>");
-        out.printf("<body><table border='1' style='%s'>", css );
+        out.printf("<body><table border='1' >" );
         out.printf("<tr><td>Server</td>");
         Map<String,CheckStatus> check= doChecks(servers.get(0));
         for ( Entry<String,CheckStatus> e: check.entrySet() ) {
-            out.printf("<td class=\"CellWithComment\">%s</td>", e.getKey() );
+            out.printf("<td>%s</td>", e.getKey() );
         }
         out.printf("</tr>");
         
@@ -110,11 +121,27 @@ public class HapiVerifier {
             check= doChecks(server);                
             out.printf("<tr><td>%s</td>\n",server);
             
+            String serverName= server.getPath().replaceAll("/", "_");
+            serverName= serverName.replaceAll(":","");
+            File serverRoot= new File( root, serverName );
+            if ( !serverRoot.exists() ) {
+                if ( !serverRoot.mkdirs() ) {
+                    throw new IllegalArgumentException("unable to mkdir "+serverRoot);
+                }
+            }
+            
             for ( Entry<String,CheckStatus> e: check.entrySet() ) {
                 CheckStatus c= e.getValue();
-                String label= c.getMessage();
-                label="";
-                out.printf("<td class=\"CellWithComment\" color=\"%s\">%s<span class=\"CellComment\">%s</span></td>", colorFor( c.getStatus() ), c.getStatus(), label );
+                
+                try (PrintWriter out2 = new PrintWriter( new File( serverRoot, e.getKey()+".html" ) )) {
+                    out2.println( "<h1>" );
+                    out2.println( c.getMessage() );
+                    out2.println( "</h1>" );
+                    out2.println( "<br>" );
+                    out2.println( c.getLog().replaceAll("\n", "<br>\n" ) );
+                }
+                
+                out.printf("<td color=\"%s\"><a href=\"%s/%s.html\">%s</a></td>", colorFor( c.getStatus() ), serverName, e.getKey(), c.getStatus() );
                 
             }
             out.printf("</tr>\n" );
@@ -122,16 +149,16 @@ public class HapiVerifier {
         }
         out.println("</table>");
         out.println("</body>");
-  
+        out.close();
     }
             
-    public static void doAllServers( PrintStream out ) throws MalformedURLException {
-        doAllServers( new PrintWriter( out ) );
+    public static void doAllServers( PrintStream out ) throws MalformedURLException, FileNotFoundException, IOException {
+        doAllServers( new File("/tmp/hapiVerifier/") );
+        out.write( "<a href='index.html'>here</a>".getBytes() );
+        out.close();
     }
     
     public static void main( String[] args ) throws MalformedURLException, FileNotFoundException {
-        try (PrintWriter out = new PrintWriter(new File("/tmp/out.hapicheck.html"))) {
-            doAllServers(out);
-        }
+        doAllServers( new File("/tmp/hapiVerifier/" ));
     }
 }

@@ -12,6 +12,9 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 /**
+ * each Check is a implementation of this abstract class, calling the constructor
+ * with the Check's name and implementing doCheck method.  The logger "logger"
+ * can be used to send additional logging information for the check.
  * @author jbf
  */
 public abstract class Check {

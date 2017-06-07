@@ -39,4 +39,20 @@ public class CheckStatus {
         this.status = status;
     }
     
+    private String log = "";
+
+    public String getLog() {
+        return log;
+    }
+
+    /** 
+     * set the log associated with the test--note that this is set externally
+     * and the Check should not call this.
+     * @param log 
+     */
+    public void setLog(String log) {
+        this.log = log;
+    }
+
+    
 }
