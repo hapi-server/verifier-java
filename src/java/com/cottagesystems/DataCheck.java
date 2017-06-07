@@ -14,7 +14,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- *
+ * verify data request for example times.
  * @author jbf
  */
 public class DataCheck extends Check {
@@ -29,12 +29,14 @@ public class DataCheck extends Check {
         params.put( "time.min", min );
         params.put( "time.max", max );
         URL data= hapiURL( hapi, "data", params );
+        logger.log(Level.INFO, "opening {0}", data);
         
         StringBuilder b= new StringBuilder();
-        BufferedReader read= new BufferedReader( new InputStreamReader(data.openStream()) );
-        String s;
-        while ( ( s=read.readLine() )!=null ) {
-            b.append(s).append("\n");
+        try ( BufferedReader read= new BufferedReader( new InputStreamReader(data.openStream()) ) ) {
+            String s;
+            while ( ( s=read.readLine() )!=null ) {
+                b.append(s).append("\n");
+            }
         }
         
         return new CheckStatus(0);
@@ -42,11 +44,13 @@ public class DataCheck extends Check {
     
     private CheckStatus doCheck(String id) throws Exception {
         URL info= hapiURL( hapi, "info", Collections.singletonMap( "id", id ) );
+        logger.log(Level.INFO, "opening {0}", info);
         StringBuilder b= new StringBuilder();
-        BufferedReader read= new BufferedReader( new InputStreamReader(info.openStream()) );
-        String s;
-        while ( ( s=read.readLine() )!=null ) {
-            b.append(s).append("\n");
+        try ( BufferedReader read= new BufferedReader( new InputStreamReader(info.openStream()) ) ) {
+            String s;
+            while ( ( s=read.readLine() )!=null ) {
+                b.append(s).append("\n");
+            }
         }
         JSONObject jo= new JSONObject(b.toString());
         jo.getString("HAPI");
@@ -76,12 +80,14 @@ public class DataCheck extends Check {
     
     @Override
     public CheckStatus doCheck() throws Exception {
-        URL cap= hapiURL( hapi, "catalog", null );
+        URL catalog= hapiURL( hapi, "catalog", null );
+        logger.log(Level.INFO, "opening {0}", catalog);
         StringBuilder b= new StringBuilder();
-        BufferedReader read= new BufferedReader( new InputStreamReader(cap.openStream()) );
-        String s;
-        while ( ( s=read.readLine() )!=null ) {
-            b.append(s).append("\n");
+        try ( BufferedReader read= new BufferedReader( new InputStreamReader(catalog.openStream()) ) ) {
+            String s;
+            while ( ( s=read.readLine() )!=null ) {
+                b.append(s).append("\n");
+            }
         }
         JSONObject jo= new JSONObject(b.toString());
         jo.getString("HAPI");

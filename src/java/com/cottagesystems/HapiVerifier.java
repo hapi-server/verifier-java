@@ -13,6 +13,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Check known HAPI servers against a suite of checks.
@@ -20,18 +22,29 @@ import java.util.Map.Entry;
  */
 public class HapiVerifier {
     
+    private static final Logger logger= Logger.getLogger("HapiVerifier");
+    
+    /**
+     * perform the check, adding the result CheckStatus to the collection of results from other tests.
+     * @param results
+     * @param check 
+     */
     public static void doCheck( LinkedHashMap<String,CheckStatus> results, Check check ) {
+        String checkName= check.getName();
+        logger.log(Level.INFO, "-- doCheck {0} --", check.toString());
+        CheckStatus checkStatus;
         try {
-            results.put( check.getName(), check.doCheck()  );
-        } catch (Exception ex) {
-            results.put( check.getName(), new CheckStatus(1,ex.toString()) );
+            checkStatus= check.doCheck();
+        } catch ( Exception ex ) {
+            checkStatus= new CheckStatus(1,ex.toString());
         }
+        results.put( checkName, checkStatus );
     }
     
     /**
      * run all the checks on the server
-     * @param server
-     * @return 
+     * @param server the HAPI server URL, ending in "/hapi"
+     * @return a map from check name to CheckStatus
      */
     public static Map<String,CheckStatus> doChecks( URL server ) {
         LinkedHashMap<String,CheckStatus> results= new LinkedHashMap<>();

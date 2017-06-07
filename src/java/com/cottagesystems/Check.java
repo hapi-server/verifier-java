@@ -53,5 +53,10 @@ public abstract class Check {
         return this.name;
     }
     
+    @Override
+    public String toString() {
+        return name + " " + hapi;
+    }
+    
     public abstract CheckStatus doCheck( ) throws Exception ;
 }
