@@ -5,11 +5,17 @@
  */
 package com.cottagesystems;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * each Check is a implementation of this abstract class, calling the constructor
@@ -50,6 +56,24 @@ public abstract class Check {
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex);
         }
+    }
+    
+    /**
+     * return a JSONObject response from the server, for the URL.
+     * @param url
+     * @return the JSONObject
+     * @throws org.json.JSONException 
+     * @throws java.io.IOException 
+     */
+    public static JSONObject getJSONObject( URL url ) throws JSONException, IOException {
+        logger.log(Level.INFO, "opening {0}", url);
+        StringBuilder b= new StringBuilder();
+        BufferedReader read= new BufferedReader( new InputStreamReader(url.openStream()) );
+        String s;
+        while ( ( s=read.readLine() )!=null ) {
+            b.append(s).append("\n");
+        }
+        return new JSONObject(b.toString());
     }
     
     public String getName() {

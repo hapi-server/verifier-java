@@ -21,13 +21,7 @@ public class InfoCheck extends Check {
     
     private CheckStatus doCheck(String id) throws Exception {
         URL info= hapiURL( hapi, "info", Collections.singletonMap( "id", id ) );
-        StringBuilder b= new StringBuilder();
-        BufferedReader read= new BufferedReader( new InputStreamReader(info.openStream()) );
-        String s;
-        while ( ( s=read.readLine() )!=null ) {
-            b.append(s).append("\n");
-        }
-        JSONObject jo= new JSONObject(b.toString());
+        JSONObject jo= getJSONObject(info);
         jo.getString("HAPI");
         //jo.getString("status"); //TEMPORARY
         jo.getString("startDate");
@@ -53,14 +47,8 @@ public class InfoCheck extends Check {
     
     @Override
     public CheckStatus doCheck() throws Exception {
-        URL cap= hapiURL( hapi, "catalog", null );
-        StringBuilder b= new StringBuilder();
-        BufferedReader read= new BufferedReader( new InputStreamReader(cap.openStream()) );
-        String s;
-        while ( ( s=read.readLine() )!=null ) {
-            b.append(s).append("\n");
-        }
-        JSONObject jo= new JSONObject(b.toString());
+        URL cat= hapiURL( hapi, "catalog", null );
+        JSONObject jo= getJSONObject(cat);
         jo.getString("HAPI");
         jo.getString("status");
         JSONArray ja= jo.getJSONArray("catalog");

@@ -22,14 +22,8 @@ public class CatalogCheck extends Check {
     
     @Override
     public CheckStatus doCheck( ) throws MalformedURLException, IOException, JSONException {
-        URL cap= hapiURL( hapi, "catalog", null );
-        StringBuilder b= new StringBuilder();
-        BufferedReader read= new BufferedReader( new InputStreamReader(cap.openStream()) );
-        String s;
-        while ( ( s=read.readLine() )!=null ) {
-            b.append(s).append("\n");
-        }
-        JSONObject jo= new JSONObject(b.toString());
+        URL cat= hapiURL( hapi, "catalog", null );
+        JSONObject jo= getJSONObject(cat);
         jo.getString("HAPI");
         jo.getString("status");
         JSONArray ja= jo.getJSONArray("catalog");
