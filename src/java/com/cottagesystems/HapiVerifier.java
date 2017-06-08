@@ -249,7 +249,9 @@ public class HapiVerifier {
             }
             out.println("</table>");
             
-            out.println("<a href=\"index.jsp\">manage</a>");
+            out.println("<a href=\"index.jsp\">manage</a><br>\n");
+            
+            out.println("data is stored in "+HapiVerifier.root+"<br>\n");
             
             out.println("<small>Complete test suite calculated in "+ String.format( "%.2f", (System.currentTimeMillis()-t0)/60000. ) + " minutes." );
             out.println("</body>");
