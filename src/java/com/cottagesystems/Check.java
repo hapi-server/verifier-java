@@ -6,6 +6,8 @@
 package com.cottagesystems;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -76,8 +78,20 @@ public abstract class Check {
         return new JSONObject(b.toString());
     }
     
+    /**
+     * return the name of the test.
+     * @return 
+     */
     public String getName() {
         return this.name;
+    }
+    
+    /**
+     * return the hapi folder of a server.
+     * @return 
+     */
+    public URL getHapi() {
+        return this.hapi;
     }
     
     @Override
