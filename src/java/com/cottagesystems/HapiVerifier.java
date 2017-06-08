@@ -1,8 +1,10 @@
 
 package com.cottagesystems;
 
+import static com.cottagesystems.Check.getJSONObject;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -21,6 +23,8 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 /**
@@ -38,6 +42,12 @@ public class HapiVerifier {
      */
     public static void doCheck( LinkedHashMap<String,CheckStatus> results, Check check ) {
         String checkName= check.getName();
+        CheckStatus cached= haveCached(check);
+        if ( cached!=null ) {
+            results.put( checkName, cached );
+            return;
+        }
+        
         logger.log(Level.INFO, "-- doCheck {0} --", check.toString());
         final StringBuilder b= new StringBuilder();
         Handler h= new Handler() {
@@ -67,8 +77,63 @@ public class HapiVerifier {
         checkStatus.setLog(b.toString());
         logger.removeHandler(h);
         results.put( checkName, checkStatus );
-        
+        try {
+            cache( check, checkStatus );
+        } catch ( IOException ex ) {
+            logger.warning("unable to cache result");
+        }
     }
+    
+    /**
+     * return null or the cached check status.
+     * @param check
+     * @return 
+     */
+    public static CheckStatus haveCached( Check check ) {
+        File serverRoot= HapiVerifier.serverFolder(check.getHapi());
+        File cacheFile= new File( serverRoot, check.getName() + ".json" );
+        if ( cacheFile.exists() ) {
+            try {
+                JSONObject jo= getJSONObject( new URL( "file:"+ cacheFile ) );
+                int status= jo.getInt("status");
+                String message= jo.getString("message");
+                CheckStatus result= new CheckStatus(status,message);
+                result.setLog( jo.getString("log") );
+                return result;
+            } catch (MalformedURLException ex) {
+                Logger.getLogger(Check.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (JSONException | IOException ex) {
+                Logger.getLogger(Check.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * add the result to the cache of results.
+     * @param check
+     * @param status
+     * @throws IOException 
+     */
+    public static void cache( Check check, CheckStatus status ) throws IOException {
+        File serverRoot= HapiVerifier.serverFolder(check.getHapi());
+        if ( !serverRoot.exists() && serverRoot.mkdirs() ) {
+            throw new IOException("unable to mkdir "+serverRoot);
+        }
+        File cacheFile= new File( serverRoot, check.getName() + ".json" );
+        try ( FileWriter fw= new FileWriter(cacheFile) ) {
+            JSONObject jo= new JSONObject();
+            jo.put( "status", status.getStatus() );
+            jo.put( "message", status.getMessage() );
+            jo.put( "log", status.getLog() );
+            jo.write( fw );
+        } catch (JSONException ex) {
+            Logger.getLogger(Check.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        logger.log(Level.INFO, "wrote cache file {0}", cacheFile);
+    }
+    
+    
     
     /**
      * run all the checks on the server
@@ -94,9 +159,28 @@ public class HapiVerifier {
         return results;
     }
     
+    /**
+     * return the directory containing cached test results.
+     * @param server
+     * @return 
+     */
+    public static String serverFolderName( URL server ) {
+        String serverName= server.getProtocol() + "_" + server.getAuthority() + server.getPath().replaceAll("/", "_");
+        return serverName;
+    }
+    
+    public static File serverFolder( URL server ) {
+        String serverName= serverFolderName( server );
+        File serverRoot= new File( root, serverName );
+        return serverRoot;
+    }
+    
+    private static File root;
     
     public static void doAllServers( File root ) throws MalformedURLException, FileNotFoundException {
          
+        HapiVerifier.root= root;
+        
         long t0= System.currentTimeMillis();
                 
         if ( !root.exists() ) {
@@ -108,8 +192,8 @@ public class HapiVerifier {
         try (PrintWriter out = new PrintWriter( new File( root, "index.html" ) )) {
             List<URL> servers= new ArrayList<>();
             servers.add( new URL("http://jfaden.net/HapiServerDemo/hapi") );
-            //servers.add( new URL("http://datashop.elasticbeanstalk.com/hapi") );
-            //servers.add( new URL("http://mag.gmu.edu/TestData/hapi") );
+            servers.add( new URL("http://datashop.elasticbeanstalk.com/hapi") );
+            servers.add( new URL("http://mag.gmu.edu/TestData/hapi") );
             
             out.printf("<html>");
             out.printf("<body><table border='1' >" );
@@ -124,9 +208,9 @@ public class HapiVerifier {
                 
                 check= doChecks(server);
                 
-                String serverName= server.getPath().replaceAll("/", "_");
-                serverName= serverName.replaceAll(":","");
-                File serverRoot= new File( root, serverName );
+                String serverName= serverFolderName(server);
+                        
+                File serverRoot= serverFolder(server);
                 if ( !serverRoot.exists() ) {
                     if ( !serverRoot.mkdirs() ) {
                         throw new IllegalArgumentException("unable to mkdir "+serverRoot);
