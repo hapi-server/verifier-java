@@ -382,13 +382,66 @@ public class HapiVerifier {
         src.close();
     }
     
+    /**
+     * reset the test caches, limiting to one server when this is non-null, or
+     * one test when it is non-null.
+     * @param root
+     * @param server null or the server
+     * @param test null or the test
+     */
+    public static void resetCachedResults( File root, URL server, String test ) {
+        File[] ff= root.listFiles();
+        String sserver=null;
+        if ( server!=null ) {
+            sserver= serverFolderName(server);
+        }
+        for ( File f: ff ) {
+            if ( f.isDirectory() ) {
+                if ( sserver==null || f.getName().equals(sserver) ) {
+                    File [] ff1= f.listFiles();
+                    for ( File f1: ff1 ) {
+                        if ( f1.getName().endsWith(".json") ) {
+                            if ( test==null || f1.getName().equals(test+".json") ) {
+                                if ( !f1.delete() ) {
+                                    throw new IllegalArgumentException("unable to delete file: "+f1);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            }
+        }
+    }
+    
     public static void doAllServers( PrintStream out ) throws MalformedURLException, FileNotFoundException, IOException {
         doAllServers( new File("/tmp/hapiVerifier/") );
         out.write( "<a href='index.html'>here</a>".getBytes() );
         out.close();
     }
     
+    /**
+     * Run the test.  You can refresh for one server with:
+     * --server=http://jfaden.net/HapiServerDemo/hapi 
+     * or one test with:
+     * --test==info
+     * @param args
+     * @throws MalformedURLException
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
     public static void main( String[] args ) throws MalformedURLException, FileNotFoundException, IOException {
-        doAllServers( new File("/tmp/hapiVerifier/" ));
+        File root= new File("/tmp/hapiVerifier/" );
+        String sserver=null;
+        String test=null;
+        args= new String[] { "--server=http://jfaden.net/HapiServerDemo/hapi" };
+        for ( String s:args ) {
+            if ( s.startsWith("--server=") ) sserver=s.substring(9);
+            if ( s.startsWith("--test=") ) test=s.substring(7);
+        }
+        URL server= sserver==null?null:new URL(sserver);
+        resetCachedResults(root,server,test);
+        
+        doAllServers(root);
     }
 }
