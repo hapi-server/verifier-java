@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.cottagesystems;
+package org.hapiserver;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -106,7 +106,7 @@ public abstract class Check {
             default:
                 String clasName= "" + Character.toUpperCase(checkName.charAt(0)) + checkName.substring(1) + "Check";        
                 try {
-                    Class c= Class.forName( "com.cottagesystems."+clasName );
+                    Class c= Class.forName( "org.hapiserver."+clasName );
                     Constructor cons= c.getConstructor(URL.class);
                     result= (Check) cons.newInstance(server);
                 } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {

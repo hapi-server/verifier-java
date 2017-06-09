@@ -1,7 +1,7 @@
 
-package com.cottagesystems;
+package org.hapiserver;
 
-import static com.cottagesystems.Check.hapiURL;
+import static org.hapiserver.Check.hapiURL;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -16,48 +16,39 @@ import org.json.JSONObject;
  * verify data request for example times.
  * @author jbf
  */
-public class PartialDataCheck extends Check {
+public class DataCheck extends Check {
     
-    public PartialDataCheck( URL hapi ) {
-        super(hapi,"partialdata");
+    public DataCheck( URL hapi ) {
+        super(hapi,"data");
     }
     
-    private CheckStatus doCheck( String id, String parameters, String min, String max, int nf ) throws Exception {
+    private CheckStatus doCheck( String id, String min, String max ) throws Exception {
         Map<String,String> params= new LinkedHashMap<>();
         params.put( "id", id );
         params.put( "time.min", min );
         params.put( "time.max", max );
-        params.put( "parameters", parameters );
         URL data= hapiURL( hapi, "data", params );
         logger.log(Level.INFO, "opening {0}", data);
         
-        int actualFieldCount= -1;
         int len=0;
         StringBuilder b= new StringBuilder();
         try ( BufferedReader read= new BufferedReader( new InputStreamReader(data.openStream()) ) ) {
             String s;
             while ( ( s=read.readLine() )!=null ) {
-                if ( actualFieldCount==-1 ) {
-                    actualFieldCount= s.split(",").length;
-                }
                 b.append(s).append("\n");
                 len+= 1;
             }
         }
         logger.log(Level.INFO, "Records received: {0}", len);
         if ( len>0 ) {
-            if ( actualFieldCount!=nf ) {
-                return new CheckStatus(2,"expected "+nf+" fields but got "+actualFieldCount );
-            } else {
-                return new CheckStatus(0);
-            }
+            return new CheckStatus(0);
         } else {
             return new CheckStatus(1,"empty response");
         }
     }
     
     private CheckStatus doCheck(String id) throws Exception {
-        URL info= hapiURL( hapi, "info", Collections.singletonMap( "id", id ) );
+        URL info= hapiURL( hapi, "info", Collections.singletonMap( "id",id ) );
         JSONObject jo= getJSONObject(info);
         jo.getString("HAPI");
         //jo.getString("status"); //TEMPORARY
@@ -80,22 +71,7 @@ public class PartialDataCheck extends Check {
             return new CheckStatus(0);
         }
         
-        JSONArray arr= jo.getJSONArray("parameters");
-        if ( arr.length()<2 ) {
-            return new CheckStatus(0);
-        } else {
-            String parameters= arr.getJSONObject(0).getString("name") + "," + arr.getJSONObject(1).getString("name");
-            int nf= 1;
-            if ( arr.getJSONObject(1).has("size") ) {
-                JSONArray size= arr.getJSONObject(1).getJSONArray("size");
-                int p=1;
-                for ( int j=0; j<size.length(); j++ ) p*= size.getInt(j);
-                nf+= p;
-            } else {
-                nf+= 1;
-            }
-            return doCheck( id, parameters, sampleStartDate, sampleStopDate, nf );
-        }
+        return doCheck( id, sampleStartDate, sampleStopDate );
         
     }
     

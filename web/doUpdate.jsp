@@ -5,7 +5,7 @@
 --%>
 
 <%@page import="java.io.File"%>
-<%@page import="com.cottagesystems.HapiVerifier"%>
+<%@page import="org.hapiserver.HapiVerifier"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>

@@ -1,7 +1,7 @@
 
-package com.cottagesystems;
+package org.hapiserver;
 
-import static com.cottagesystems.Check.hapiURL;
+import static org.hapiserver.Check.hapiURL;
 import java.net.URL;
 import java.util.Collections;
 import org.json.JSONArray;

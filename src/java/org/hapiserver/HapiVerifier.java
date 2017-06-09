@@ -1,7 +1,7 @@
 
-package com.cottagesystems;
+package org.hapiserver;
 
-import static com.cottagesystems.Check.getJSONObject;
+import static org.hapiserver.Check.getJSONObject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
