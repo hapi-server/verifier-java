@@ -423,9 +423,37 @@ public class HapiVerifier {
         }
     }
     
-    public static void doAllServers( PrintStream out ) throws MalformedURLException, FileNotFoundException, IOException {
-        doAllServers( new File("/tmp/hapiVerifier/") );
-        out.write( "<a href='index.html'>here</a>".getBytes() );
+    /**
+     * run the tests, refreshing sserver=null and test=null.
+     * @param out status messages.
+     * @param root the output folder.
+     * @param sserver
+     * @param test
+     * @throws MalformedURLException
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
+    public static void doAllServers( final PrintStream out, File root, String sserver, String test ) throws MalformedURLException, FileNotFoundException, IOException {
+        URL server= sserver==null?null:new URL(sserver);
+        resetCachedResults( root,server,test);
+        logger.addHandler( new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                SimpleFormatter formatter= new SimpleFormatter();
+                String s= formatter.formatMessage(record);
+                out.append(s);
+                out.append("\n");
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() throws SecurityException {
+            }
+        });
+        doAllServers( root );
         out.close();
     }
     
