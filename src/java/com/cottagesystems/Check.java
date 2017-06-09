@@ -6,10 +6,10 @@
 package com.cottagesystems;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
@@ -26,7 +26,7 @@ import org.json.JSONObject;
  * @author jbf
  */
 public abstract class Check {
-    
+
     URL hapi;
     String name;
     
@@ -76,6 +76,42 @@ public abstract class Check {
             b.append(s).append("\n");
         }
         return new JSONObject(b.toString());
+    }
+    
+    /**
+     * new Checks must be added here, or have the name 
+     * XyzCheck.java for the check "xyz".
+     * @param checkName
+     * @param server
+     * @return 
+     */
+    public static Check lookup(String checkName, URL server) {
+        Check result=null;
+        switch (checkName) {
+            case "capabilities":
+                result= new CapabilitiesCheck(server);
+                break;
+            case "catalog":
+                result= new CatalogCheck(server);
+                break;
+            case "partialdata":
+                result= new PartialDataCheck(server);
+                break;
+            default:
+                String clasName= "" + Character.toUpperCase(checkName.charAt(0)) + checkName.substring(1) + "Check";        
+                try {
+                    Class c= Class.forName( "com.cottagesystems."+clasName );
+                    Constructor cons= c.getConstructor(URL.class);
+                    result= (Check) cons.newInstance(server);
+                } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
+                    logger.log(Level.SEVERE, null, ex);
+                }
+        }
+        if ( result==null ) {
+            throw new IllegalArgumentException("unable to find Java class for check \""+checkName+"\"");
+        } else {
+            return result;
+        }
     }
     
     /**

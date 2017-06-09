@@ -2,10 +2,16 @@
 package com.cottagesystems;
 
 import static com.cottagesystems.Check.getJSONObject;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -133,22 +139,92 @@ public class HapiVerifier {
         logger.log(Level.INFO, "wrote cache file {0}", cacheFile);
     }
     
+    /**
+     * return a list of checks to perform, such as "capabilities" and "data"
+     * read from the file ROOT/checks.txt.
+     * @param root the root of the testing area.
+     * @return the list of checks.
+     * @throws IOException 
+     */
+    public static List<String> getCheckNames( File root ) throws IOException {
+        List<String> checks= new ArrayList<>();
+        File checksFile= new File( root, "checks.txt" );
+        if ( checksFile.exists() ) {
+            try ( BufferedReader read= new BufferedReader(new FileReader(checksFile)) ) {
+                String line;
+                while ( ( line= read.readLine())!=null ) {
+                    int i= line.indexOf('#');
+                    if ( i>-1 ) line= line.substring(0,i);
+                    if ( line.trim().length()!=0 ) {
+                        checks.add( line ) ;
+                    }
+                }
+            }
+        } else {
+            checks.add( "capabilities" );
+            checks.add( "catalog" );
+            checks.add( "info" );
+            checks.add( "data" );
+            checks.add( "partialdata" );
+            try ( BufferedWriter write= new BufferedWriter( new FileWriter(checksFile) ) ) {
+                for ( String check1: checks ) {
+                    write.write(check1);
+                    write.write('\n');
+                }
+            }
+        }
+        return checks;
+    }
+    
+    /**
+     * return a list of servers to check, using ROOT/servers.txt.  This
+     * file will be created with a hard-coded list of servers, 
+     * @param root
+     * @return list of servers, pointing to the ".../hapi" landing page.
+     * @throws IOException 
+     */
+    public static List<URL> getServers(File root) throws IOException {
+        List<URL> servers= new ArrayList<>();
+        File serversFile = new File(root, "servers.txt");
+        if ( serversFile.exists() ) {
+            try ( BufferedReader read= new BufferedReader(new FileReader(serversFile)) ) {
+                String line;
+                while ( ( line= read.readLine())!=null ) {
+                    if ( line.trim().length()!=0 ) {
+                        servers.add( new URL(line) ) ;
+                    }
+                }
+            }
+        } else {
+            servers.add( new URL("http://jfaden.net/HapiServerDemo/hapi") );
+            servers.add( new URL("http://datashop.elasticbeanstalk.com/hapi") );
+            servers.add( new URL("http://mag.gmu.edu/TestData/hapi") );
+            try ( BufferedWriter write= new BufferedWriter( new FileWriter(serversFile) ) ) {
+                for ( URL server1: servers ) {
+                    write.write(server1.toExternalForm());
+                    write.write('\n');
+                }
+            }
+        }
+        return servers;
+    }
     
     
     /**
      * run all the checks on the server
+     * @param root testing area
      * @param server the HAPI server URL, ending in "/hapi"
      * @return a map from check name to CheckStatus
+     * @throws java.io.IOException
      */
-    public static Map<String,CheckStatus> doChecks( URL server ) {
+    public static Map<String,CheckStatus> doChecks( File root, URL server ) throws IOException {
         LinkedHashMap<String,CheckStatus> results= new LinkedHashMap<>();
         List<Check> checks= new ArrayList<>();
         
-        checks.add( new CapabilitiesCheck( server ) );
-        checks.add( new CatalogCheck( server ) );
-        checks.add( new InfoCheck( server ) );
-        checks.add( new DataCheck( server ) );
-        checks.add( new PartialDataCheck( server ) );
+        List<String> checkNames= getCheckNames(root);
+        for ( String checkName: checkNames ) {
+            checks.add( Check.lookup(checkName,server) );
+        }
         
         for ( Check check : checks ) {
             if ( results.containsKey(check.getName() ) ) {
@@ -177,7 +253,7 @@ public class HapiVerifier {
     
     private static File root;
     
-    public static void doAllServers( File root ) throws MalformedURLException, FileNotFoundException {
+    public static void doAllServers( File root ) throws MalformedURLException, FileNotFoundException, IOException {
          
         HapiVerifier.root= root;
         
@@ -188,25 +264,33 @@ public class HapiVerifier {
                 throw new IllegalArgumentException("unable to mkdir "+root);
             }
         }
+
+        File icon;
+        icon= new File( root, "red.gif" );
+        if ( !icon.exists()) transfer( HapiVerifier.class.getResourceAsStream("/resource/red.gif"), new FileOutputStream(icon) );
+        icon= new File( root, "blue.gif" );
+        if ( !icon.exists()) transfer( HapiVerifier.class.getResourceAsStream("/resource/blue.gif"), new FileOutputStream(icon) );
+        icon= new File( root, "grey.gif" );
+        if ( !icon.exists()) transfer( HapiVerifier.class.getResourceAsStream("/resource/grey.gif"), new FileOutputStream(icon) );
+        
+        List<URL> servers= getServers(root);
         
         try (PrintWriter out = new PrintWriter( new File( root, "index.html" ) )) {
-            List<URL> servers= new ArrayList<>();
-            servers.add( new URL("http://jfaden.net/HapiServerDemo/hapi") );
-            servers.add( new URL("http://datashop.elasticbeanstalk.com/hapi") );
-            servers.add( new URL("http://mag.gmu.edu/TestData/hapi") );
             
             out.printf("<html>");
             out.printf("<body><table border='1' >" );
             out.printf("<tr><td>Server</td>");
-            Map<String,CheckStatus> check= doChecks(servers.get(0));
-            for ( Entry<String,CheckStatus> e: check.entrySet() ) {
-                out.printf("<td>%s</td>", e.getKey() );
+            
+            List<String> checkNames= getCheckNames(root);
+            
+            for ( String checkName: checkNames ) {
+                out.printf("<td>%s</td>", checkName );
             }
             out.printf("</tr>");
             
             for ( URL server: servers ) {
                 
-                check= doChecks(server);
+                Map<String,CheckStatus> check= doChecks(root,server);
                 
                 String serverName= serverFolderName(server);
                         
@@ -257,7 +341,7 @@ public class HapiVerifier {
             out.println("</body>");
         }
     }
-    
+
     private static String makeHtml( String raw ) {
         StringBuilder builder= new StringBuilder();
         String[] ss= raw.split("\n");
@@ -279,13 +363,32 @@ public class HapiVerifier {
         return builder.toString();
     }
             
+    /**
+     * transfers the data from one channel to another.  src and dest are
+     * closed after the operation is complete.
+     * @param src
+     * @param dest
+     * @throws java.io.IOException
+     */
+    public static void transfer( InputStream src, OutputStream dest ) throws IOException {
+        final byte[] buffer = new byte[ 16 * 1024 ];
+
+        int i= src.read(buffer);
+        while ( i != -1) {
+            dest.write(buffer,0,i);
+            i= src.read(buffer);
+        }
+        dest.close();
+        src.close();
+    }
+    
     public static void doAllServers( PrintStream out ) throws MalformedURLException, FileNotFoundException, IOException {
         doAllServers( new File("/tmp/hapiVerifier/") );
         out.write( "<a href='index.html'>here</a>".getBytes() );
         out.close();
     }
     
-    public static void main( String[] args ) throws MalformedURLException, FileNotFoundException {
+    public static void main( String[] args ) throws MalformedURLException, FileNotFoundException, IOException {
         doAllServers( new File("/tmp/hapiVerifier/" ));
     }
 }
