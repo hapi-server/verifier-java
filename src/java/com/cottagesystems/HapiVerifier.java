@@ -312,33 +312,33 @@ public class HapiVerifier {
 
                 out.printf("<tr><td><a href='%s'>%s</a></td>\n",serverName+".html",server);
                 
-                PrintWriter out3= new PrintWriter( new File( root, serverName + ".html" ) );
-                out3.println( "<h2>Server <a href="+server+">"+server +"</a></h2>");
-                
-                out3.println( "<table>");
-                for ( Entry<String,CheckStatus> e: check.entrySet() ) {
+                try (PrintWriter out3 = new PrintWriter( new File( root, serverName + ".html" ) )) {
+                    out3.println( "<h2>Server <a href="+server+">"+server +"</a></h2>");
                     
-                    CheckStatus c= e.getValue();
-                    
-                    try (PrintWriter out2 = new PrintWriter( new File( serverRoot, e.getKey()+".html" ) )) {
-                        out2.println( "<h2>" );
-                        out2.println( "Test \""+e.getKey()+"\" on server "+ server );
-                        out2.println( "</h2>" );
-                        out2.println( "Status Code=" + c.getStatus() + "<br>");
-                        out2.println( c.getMessage() );
-                        out2.println( "<br>" );
-                        out2.println( "<h2>Log output</h2>");
-                        out2.println( makeHtml( c.getLog() ) );
+                    out3.println( "<table>");
+                    for ( Entry<String,CheckStatus> e: check.entrySet() ) {
+                        
+                        CheckStatus c= e.getValue();
+                        
+                        try (PrintWriter out2 = new PrintWriter( new File( serverRoot, e.getKey()+".html" ) )) {
+                            out2.println( "<h2>" );
+                            out2.println( "Test \""+e.getKey()+"\" on server "+ server );
+                            out2.println( "</h2>" );
+                            out2.println( "Status Code=" + c.getStatus() + "<br>");
+                            out2.println( c.getMessage() );
+                            out2.println( "<br>" );
+                            out2.println( "<h2>Log output</h2>");
+                            out2.println( makeHtml( c.getLog() ) );
+                        }
+                        
+                        String ball= c.getStatus()==0 ? "blue" : "red";
+                        out3.printf( "<tr><td><a href=\"%s/%s.html\"><img src='%s.gif'>%s</a></td><td>%s</td></tr>\n", serverName, e.getKey(), ball, e.getKey(), c.getMessage() );
+                        out.printf("<td><a href=\"%s/%s.html\"><img src='%s.gif'></a></td>", serverName, e.getKey(), ball );
+                        
                     }
-                    
-                    String ball= c.getStatus()==0 ? "blue" : "red";
-                    out3.printf( "<tr><td><a href=\"%s/%s.html\"><img src='%s.gif'>%s</a></td><td>%s</td></tr>\n", serverName, e.getKey(), ball, e.getKey(), c.getMessage() );
-                    out.printf("<td><a href=\"%s/%s.html\"><img src='%s.gif'></a></td>", serverName, e.getKey(), ball );
-                    
+                    out.printf("</tr>\n" );
+                    out3.println("</table>");
                 }
-                out.printf("</tr>\n" );
-                out3.println("</table>");
-                out3.close();
             }
             out.println("</table>");
             
