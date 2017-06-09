@@ -2,8 +2,6 @@
 package com.cottagesystems;
 
 import static com.cottagesystems.Check.hapiURL;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Collections;
 import org.json.JSONArray;
