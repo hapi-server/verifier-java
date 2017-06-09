@@ -12,6 +12,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -51,7 +52,12 @@ public abstract class Check {
                     } else {
                         url.append("&");
                     }
-                    url.append(arg.getKey()).append("=").append(arg.getValue());
+                    if ( arg.getValue().contains(" ") ) {
+                        url.append(arg.getKey()).append("=").append(URLEncoder.encode(arg.getValue()));
+                    } else {
+                        url.append(arg.getKey()).append("=").append(arg.getValue()); // for readability's sake, only escape spaces.
+                    }
+                    
                 }
             }
             return new URL( url.toString() );

@@ -58,7 +58,7 @@ public class PartialDataCheck extends Check {
     }
     
     private CheckStatus doCheck(String id) throws Exception {
-        URL info= hapiURL( hapi, "info", Collections.singletonMap( "id", URLEncoder.encode(id,"UTF-8") ) );
+        URL info= hapiURL( hapi, "info", Collections.singletonMap( "id", id ) );
         JSONObject jo= getJSONObject(info);
         jo.getString("HAPI");
         //jo.getString("status"); //TEMPORARY

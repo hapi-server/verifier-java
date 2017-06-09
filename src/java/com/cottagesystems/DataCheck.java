@@ -5,6 +5,7 @@ import static com.cottagesystems.Check.hapiURL;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class DataCheck extends Check {
     }
     
     private CheckStatus doCheck(String id) throws Exception {
-        URL info= hapiURL( hapi, "info", Collections.singletonMap( "id", id ) );
+        URL info= hapiURL( hapi, "info", Collections.singletonMap( "id",id ) );
         JSONObject jo= getJSONObject(info);
         jo.getString("HAPI");
         //jo.getString("status"); //TEMPORARY
