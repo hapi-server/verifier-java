@@ -54,7 +54,7 @@ public class HapiVerifier {
             return;
         }
         
-        logger.log(Level.INFO, "-- doCheck {0} --", check.toString());
+        logger.log(Level.INFO, "### doCheck {0} ###", check.toString());
         final StringBuilder b= new StringBuilder();
         Handler h= new Handler() {
             @Override
@@ -253,6 +253,15 @@ public class HapiVerifier {
     
     private static File root;
     
+    /**
+     * run through all servers and all tests, but using cached results where they
+     * exist.  Typically a number of the cache files (*.json) will be deleted
+     * and the test is rerun.
+     * @param root
+     * @throws MalformedURLException
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
     public static void doAllServers( File root ) throws MalformedURLException, FileNotFoundException, IOException {
          
         HapiVerifier.root= root;
