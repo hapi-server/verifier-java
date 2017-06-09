@@ -35,12 +35,11 @@ public class InfoCheck extends Check {
             if ( type.equals("isotime") || type.equals("string" ) ) {
                 jo1.getInt("length");
             }
-            String units= jo1.getString("units");
-            if ( type.equals("isotime") ) {
-                if ( !units.equals("UTC") ) {
-                    throw new IllegalArgumentException("isotime should have units UTC");
-                }
+            if ( type.equals("isotime") && !jo1.has("units") ) {
+                throw new IllegalArgumentException("isotime should have units UTC");
             }
+            jo1.getString("units");
+            
         }
         return new CheckStatus(0);        
     }
