@@ -52,7 +52,11 @@ public class InfoCheck extends Check {
         for ( int i=0; i<ja.length(); i++ ) {
             JSONObject jo1= ja.getJSONObject(i);
             String id= jo1.getString("id");
-            doCheck(id);
+            try {
+                doCheck(id);
+            } catch ( Exception ex ) {
+                throw new IllegalStateException( "Exception with \""+id+"\": "+ex.getMessage(), ex );
+            }
         }
         return new CheckStatus(0);
     }

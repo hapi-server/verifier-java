@@ -443,7 +443,7 @@ public class HapiVerifier {
         File r= new File("/tmp/hapiVerifier/" );
         String sserver=null;
         String test=null;
-        //args= new String[] { "--server=http://jfaden.net/HapiServerDemo/hapi" };
+        args= new String[] { "--server=http://jfaden.net/HapiServerDemo/hapi", "--test=info" };
         for ( String s:args ) {
             if ( s.startsWith("--server=") ) sserver=s.substring(9);
             if ( s.startsWith("--test=") ) test=s.substring(7);
