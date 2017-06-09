@@ -440,17 +440,17 @@ public class HapiVerifier {
      * @throws IOException 
      */
     public static void main( String[] args ) throws MalformedURLException, FileNotFoundException, IOException {
-        File root= new File("/tmp/hapiVerifier/" );
+        File r= new File("/tmp/hapiVerifier/" );
         String sserver=null;
         String test=null;
-        args= new String[] { "--server=http://jfaden.net/HapiServerDemo/hapi" };
+        //args= new String[] { "--server=http://jfaden.net/HapiServerDemo/hapi" };
         for ( String s:args ) {
             if ( s.startsWith("--server=") ) sserver=s.substring(9);
             if ( s.startsWith("--test=") ) test=s.substring(7);
         }
         URL server= sserver==null?null:new URL(sserver);
-        resetCachedResults(root,server,test);
+        resetCachedResults(r,server,test);
         
-        doAllServers(root);
+        doAllServers(r);
     }
 }
