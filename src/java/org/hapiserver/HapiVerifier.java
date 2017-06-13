@@ -474,6 +474,7 @@ public class HapiVerifier {
         for ( String s:args ) {
             if ( s.startsWith("--server=") ) sserver=s.substring(9);
             if ( s.startsWith("--test=") ) test=s.substring(7);
+            if ( s.startsWith("--root=") ) r= new File(s.substring(7));
         }
         URL server= sserver==null?null:new URL(sserver);
         resetCachedResults(r,server,test);
