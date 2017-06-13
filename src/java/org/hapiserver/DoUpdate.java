@@ -44,6 +44,9 @@ public class DoUpdate extends HttpServlet {
                 HapiVerifier.doAllServers( out, root, null, null );
             } else {
                 out.println( "<body>" );
+                out.println( "Click to run test on all servers:<br>");
+                out.println( "<a href='"+request.getRequestURI()+"?action=go'>Go</a>" );
+                out.println( "Click to run all tests on an individual server:<br>");
                 out.println( "<a href='"+request.getRequestURI()+"?action=go'>Go</a>" );
                 out.println( "</body>" );
             }
