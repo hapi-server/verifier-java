@@ -60,14 +60,19 @@ public class DataCheck extends Check {
         if ( jo.has("sampleStopDate") ) {
             sampleStopDate= jo.getString("sampleStopDate");
         } else {
-            logger.log(Level.INFO, "test could not be performed for {0} from {1}", new Object[] { id, hapi } );
-            return new CheckStatus(0);
+            if ( jo.has("sampleEndDate") ) {
+                sampleStopDate= jo.getString("sampleEndDate");
+                logger.log(Level.INFO, "{0} from {1}, has sampleEndDate, which should be sampleStopDate, using this.", new Object[] { id, hapi } );
+            } else {
+                logger.log(Level.INFO, "test could not be performed for {0} from {1}, missing sampleStopDate", new Object[] { id, hapi } );
+                return new CheckStatus(0);
+            }
         }
         
         if ( jo.has("sampleStartDate") ) {
             sampleStartDate= jo.getString("sampleStartDate");
         } else {
-            logger.log(Level.INFO, "test could not be performed {0} from {1}", new Object[] { id, hapi } );
+            logger.log(Level.INFO, "test could not be performed {0} from {1}, missing sampleStartDate", new Object[] { id, hapi } );
             return new CheckStatus(0);
         }
         
