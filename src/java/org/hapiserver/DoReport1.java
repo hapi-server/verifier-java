@@ -1,9 +1,10 @@
+package org.hapiserver;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.hapiserver;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,7 +12,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -20,8 +20,7 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author jbf
  */
-@WebServlet(name = "DoReport", urlPatterns = {"/DoReport"})
-public class DoReport extends HttpServlet {
+public class DoReport1 extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -34,19 +33,15 @@ public class DoReport extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         String ROOT= getServletContext().getInitParameter("HAPI_VERIFIER_HOME");
         if ( ROOT==null ) {
             ROOT= "/tmp/hapiserver/";
         }
-        
-        String resource= request.getParameter("resource");
-        if ( resource==null ) resource= "index.html";
-        
+                
         File root= new File(ROOT);
         
         response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter();BufferedReader read= new BufferedReader( new FileReader(new File(root,resource) ) ); ) {
+        try (PrintWriter out = response.getWriter();BufferedReader read= new BufferedReader( new FileReader(new File(root,request.getServletPath() ) ) ); ) {
             String s= read.readLine();
             while ( s!=null ) {
                 out.write(s);
