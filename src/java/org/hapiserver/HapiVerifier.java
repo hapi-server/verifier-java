@@ -341,7 +341,7 @@ public class HapiVerifier {
             }
             out.println("</table>");
             
-            out.println("<a href=\"index.jsp\">manage</a><br>\n");
+            out.println("Return to <a href=\"index.jsp\">home</a><br><br>\n");
             
             out.println("data is stored in "+HapiVerifier.root+"<br>\n");
             

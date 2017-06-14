@@ -51,13 +51,15 @@ public class DoUpdate extends HttpServlet {
                 String test= request.getParameter("test"); // might be null.
                 
                 out.print("<body>");
-                out.print("<a href='index.jsp'>Return</a>" );
+                out.print("Return to <a href='index.jsp'>home</a>" );
                 out.print("<h4>Log output from run:</h4>");
                 HapiVerifier.doAllServers( out, root, server, test );
                 
             } else {
                 out.println( "<body>" );
-                out.println( "Click to run test on all servers:<br>");
+                out.print("Return to <a href='index.jsp'>home</a>" );
+                out.println( "<h4>Click to run test on all servers:</h4>");
+                out.println( "<small>this will take a while, and server will not respond nicely.</small><br>");
                 out.println( "<a href='"+request.getRequestURI()+"?action=go'>Go</a>" );
                 
                 out.println( "<h4>Click to run all tests on an individual server:</h4>");
