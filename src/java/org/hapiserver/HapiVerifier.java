@@ -440,8 +440,8 @@ public class HapiVerifier {
             public void publish(LogRecord record) {
                 SimpleFormatter formatter= new SimpleFormatter();
                 String s= formatter.formatMessage(record);
-                out.append(s);
-                out.append("\n");
+                out.append(s.replaceAll("\n","<br>"));
+                out.append("<br>");
             }
 
             @Override

@@ -1,14 +1,15 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 
-package org.hapiserver;
-
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.util.List;
-import java.net.URL;
-
+import java.io.PrintWriter;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,14 +18,11 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author jbf
  */
-@WebServlet(name = "DoUpdate", urlPatterns = {"/DoUpdate"})
-public class DoUpdate extends HttpServlet {
+public class DoReport1 extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
-     * 
-     * parameters include: action=go, server=, test=.
      *
      * @param request servlet request
      * @param response servlet response
@@ -33,51 +31,22 @@ public class DoUpdate extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        
-        String action= request.getParameter("action");
-        if ( action==null ) {
-            action="";
-        }
         String ROOT= getServletContext().getInitParameter("HAPI_VERIFIER_HOME");
         if ( ROOT==null ) {
             ROOT= "/tmp/hapiserver/";
         }
+                
         File root= new File(ROOT);
         
-        try (PrintStream out = new PrintStream( response.getOutputStream() ) ) {
-            if ( action.equals("go") ) {
-                String server= request.getParameter("server"); // might be null
-                String test= request.getParameter("test"); // might be null.
-                
-                out.print("<body>");
-                out.print("<a href='index.jsp'>Return</a>" );
-                out.print("<h4>Log output from run:</h4>");
-                HapiVerifier.doAllServers( out, root, server, test );
-                
-            } else {
-                out.println( "<body>" );
-                out.println( "Click to run test on all servers:<br>");
-                out.println( "<a href='"+request.getRequestURI()+"?action=go'>Go</a>" );
-                
-                out.println( "<h4>Click to run all tests on an individual server:</h4>");
-                List<URL> servers= HapiVerifier.getServers(root);
-                for ( URL server: servers ) {
-                    out.println( "<a href='"+request.getRequestURI()+"?server="+server+"&action=go'>"+server+"</a><br>" );
-                }
-
-                out.println( "<h4>Click to run a tests on all servers:</h4>");
-                List<String> tests= HapiVerifier.getCheckNames(root);
-                for ( String test: tests ) {
-                    out.println( "<a href='"+request.getRequestURI()+"?test="+test+"&action=go'>"+test+"</a><br>" );
-                }
-                
-                out.println( "</body>" );
+        response.setContentType("text/html;charset=UTF-8");
+        try (PrintWriter out = response.getWriter();BufferedReader read= new BufferedReader( new FileReader(new File(root,request.getServletPath() ) ) ); ) {
+            String s= read.readLine();
+            while ( s!=null ) {
+                out.write(s);
+                out.write('\n');
+                s= read.readLine();
             }
         }
-        
-        
-
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

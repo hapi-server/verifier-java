@@ -5,9 +5,17 @@
         <servlet-name>DoUpdate</servlet-name>
         <servlet-class>org.hapiserver.DoUpdate</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>DoReport1</servlet-name>
+        <servlet-class>DoReport1</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>DoUpdate</servlet-name>
         <url-pattern>/DoUpdate</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>DoReport1</servlet-name>
+        <url-pattern>*.html</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>
