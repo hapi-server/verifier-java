@@ -324,7 +324,8 @@ public class HapiVerifier {
                             out2.println( "Test \""+e.getKey()+"\" on server "+ server );
                             out2.println( "</h2>" );
                             out2.println( "Status Code=" + c.getStatus() + "<br>");
-                            out2.println( c.getMessage() );
+                            out2.println( c.getMessage() + "<br>");
+                            out2.println( String.format( "<a href='../DoUpdate?test=%s&server=%s&action=go'>Rerun</a> test<br>", new Object[] { e.getKey(), server } ) );
                             out2.println( "<br>" );
                             out2.println( "<h2>Log output</h2>");
                             out2.println( makeHtml( c.getLog() ) );
@@ -343,9 +344,9 @@ public class HapiVerifier {
             
             out.println("Return to <a href=\"index.jsp\">home</a><br><br>\n");
             
-            out.println("data is stored in "+HapiVerifier.root+"<br>\n");
-            
-            out.println("<small>Complete test suite calculated in "+ String.format( "%.2f", (System.currentTimeMillis()-t0)/60000. ) + " minutes." );
+            out.println("<small>data is stored in "+HapiVerifier.root+"<br></small>\n");
+            out.println("<small>Complete test suite calculated in "+ String.format( "%.2f", (System.currentTimeMillis()-t0)/60000. ) + " minutes.</small>" );
+            out.println("<small>Last update "+new java.util.Date()+"</small>");
             out.println("</body>");
         }
     }

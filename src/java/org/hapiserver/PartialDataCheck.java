@@ -111,12 +111,17 @@ public class PartialDataCheck extends Check {
         jo.getString("HAPI");
         jo.getString("status");
         JSONArray ja= jo.getJSONArray("catalog");
+        int status= 0;
         for ( int i=0; i<ja.length(); i++ ) {
             JSONObject jo1= ja.getJSONObject(i);
             String id= jo1.getString("id");
-            doCheck(id);
+            CheckStatus st1= doCheck(id);
+            if ( st1.getStatus()!=0 ) {
+                logger.log(Level.INFO, "<img src=''../red.gif''> test returns fail status: {0}<br>", id);
+                status=1;
+            }
         }
-        return new CheckStatus(0);
+        return new CheckStatus(status);
     }
     
 }
