@@ -19,6 +19,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Handler;
@@ -80,6 +81,7 @@ public class HapiVerifier {
             checkStatus= new CheckStatus(1,ex.toString());
         }
         checkStatus.setLog(b.toString());
+        checkStatus.setTimeStamp( new java.util.Date().getTime() );
         logger.removeHandler(h);
         results.put( checkName, checkStatus );
         try {
@@ -104,6 +106,9 @@ public class HapiVerifier {
                 String message= jo.getString("message");
                 CheckStatus result= new CheckStatus(status,message);
                 result.setLog( jo.getString("log") );
+                if ( jo.has("timeStamp") ) {
+                    result.setTimeStamp(jo.getLong("timeStamp"));
+                }
                 return result;
             } catch (MalformedURLException ex) {
                 Logger.getLogger(Check.class.getName()).log(Level.SEVERE, null, ex);
@@ -131,6 +136,7 @@ public class HapiVerifier {
             jo.put( "status", status.getStatus() );
             jo.put( "message", status.getMessage() );
             jo.put( "log", status.getLog() );
+            jo.put( "timeStamp", status.getTimeStamp() );
             jo.write( fw );
         } catch (JSONException ex) {
             Logger.getLogger(Check.class.getName()).log(Level.SEVERE, null, ex);
@@ -330,6 +336,7 @@ public class HapiVerifier {
                             out2.println( String.format( "<a href='../DoUpdate?test=%s&server=%s&action=go'>Rerun</a> test<br>", new Object[] { e.getKey(), server } ) );
                             out2.println( "<br>" );
                             out2.println( "<h2>Log output</h2>");
+                            out2.println( String.format( "<small>Test last run %s</small><br><br>", new java.util.Date(c.getTimeStamp()).toString() ) );
                             out2.println( makeHtml( c.getLog() ) );
                             out2.println( "<br>Return to <a href='../index.html'>summary</a><br>\n");
                         }
@@ -392,6 +399,25 @@ public class HapiVerifier {
         }
         dest.close();
         src.close();
+    }
+    
+    /**
+     * return the duration in a easily-human-consumable form.
+     * @param dt the duration in milliseconds.
+     * @return a duration like "2.6 hours"
+     */
+    public static String getDurationForHumans( long dt ) {
+        if ( dt<2*1000 ) {
+            return dt+" milliseconds";
+        } else if ( dt<2*60000 ) {
+            return String.format( Locale.US, "%.1f",dt/1000.)+" seconds";
+        } else if ( dt<2*3600000 ) {
+            return String.format( Locale.US, "%.1f",dt/60000.)+" minutes";
+        } else if ( dt<2*86400000 ) {
+            return String.format( Locale.US, "%.1f",dt/3600000.)+" hours";
+        } else {
+            return String.format( Locale.US, "%.1f",dt/86400000.)+" days";
+        }
     }
     
     /**
