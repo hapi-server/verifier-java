@@ -53,7 +53,7 @@ public class HapiVerifier {
             return;
         }
         
-        logger.log(Level.INFO, "### doCheck {0} ###", check.toString());
+        logger.log(Level.INFO, "### {0} ###", check.toString());
         final StringBuilder b= new StringBuilder();
         Handler h= new Handler() {
             @Override
@@ -189,6 +189,8 @@ public class HapiVerifier {
             try ( BufferedReader read= new BufferedReader(new FileReader(serversFile)) ) {
                 String line;
                 while ( ( line= read.readLine())!=null ) {
+                    int i= line.indexOf('#');
+                    if ( i>-1 ) line= line.substring(0,i);
                     if ( line.trim().length()!=0 ) {
                         servers.add( new URL(line) ) ;
                     }
