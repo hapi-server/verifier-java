@@ -77,6 +77,9 @@ public abstract class Check {
         while ( ( s=read.readLine() )!=null ) {
             b.append(s).append("\n");
         }
+        if ( b.length()==0 ) {
+            throw new IllegalArgumentException("JSON request returns empty response: "+url);
+        }
         return new JSONObject(b.toString());
     }
     
