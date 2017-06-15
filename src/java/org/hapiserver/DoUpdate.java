@@ -60,7 +60,7 @@ public class DoUpdate extends HttpServlet {
                 out.print("Return to <a href='index.jsp'>home</a>" );
                 out.println( "<h4>Click to run test on all servers:</h4>");
                 out.println( "<small>this will take a while, and server will not respond nicely.</small><br>");
-                out.println( "<a href='"+request.getRequestURI()+"?action=go'>Go</a>" );
+                out.println( "Run <a href='"+request.getRequestURI()+"?action=go'>All Tests</a>" );
                 
                 out.println( "<h4>Click to run all tests on an individual server:</h4>");
                 List<URL> servers= HapiVerifier.getServers(root);
