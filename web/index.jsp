@@ -25,6 +25,6 @@
             %>
           
         <h4>Version history</h4>
-        <small>2017-06-15: somewhat useful.</small>
+        <small>2017-06-15b: somewhat useful.</small>
     </body>
 </html>
