@@ -50,5 +50,20 @@ public class CheckStatus {
         this.log = log;
     }
 
+    private long timeStamp = 0;
+
+    public long getTimeStamp() {
+        return timeStamp;
+    }
+
+    /**
+     * age in the number of milliseconds since 1970-01-01T00:00.  
+     * (See Date.getTime()).
+     * @param timeStamp 
+     */
+    public void setTimeStamp(long timeStamp) {
+        this.timeStamp = timeStamp;
+    }
+
     
 }
