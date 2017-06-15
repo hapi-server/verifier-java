@@ -291,7 +291,12 @@ public class HapiVerifier {
         
         List<URL> servers= getServers(root);
         
-        try (PrintWriter out = new PrintWriter( new File( root, "index.html" ) )) {
+        File newFile= new File( root, "index.html.tmp" );
+        if ( newFile.exists() ) {
+            throw new IllegalArgumentException("unable to run, someone else is running");
+        }
+        
+        try (PrintWriter out = new PrintWriter( newFile )) {
             
             out.printf("<html>");
             out.printf("<body><table border='1' >" );
@@ -358,6 +363,9 @@ public class HapiVerifier {
             out.println("<small>Complete test suite calculated in "+ String.format( "%.2f", (System.currentTimeMillis()-t0)/60000. ) + " minutes.</small>" );
             out.println("<small>Last update "+new java.util.Date()+"</small>");
             out.println("</body>");
+        }
+        if ( !newFile.renameTo( new File( root, "index.html" ) ) ) {
+            throw new IllegalArgumentException("unable to rename file to index.html");
         }
     }
 
@@ -450,6 +458,16 @@ public class HapiVerifier {
                 
             }
         }
+    }
+    
+    /**
+     * check to see if someone else is running.
+     * @param root
+     * @return 
+     */
+    public static boolean isRunning( File root ) {
+        File newFile= new File( root, "index.html.tmp" );
+        return newFile.exists();
     }
     
     /**
