@@ -436,7 +436,10 @@ public class HapiVerifier {
      * @param test null or the test
      */
     public static void resetCachedResults( File root, URL server, String test ) {
+        if ( !root.exists() ) return;
+        
         File[] ff= root.listFiles();
+        
         String sserver=null;
         if ( server!=null ) {
             sserver= serverFolderName(server);
