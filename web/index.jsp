@@ -17,8 +17,13 @@
         <a href="index.html">View last run</a><br>
         <a href="DoUpdate">Run tests</a><br>
         
-        <br>HAPI_VERIFIER_HOME=<% getServletContext().getInitParameter("HAPI_VERIFIER_HOME"); %><br>
-        
+        <br>HAPI_VERIFIER_HOME=<%= getServletContext().getInitParameter("HAPI_VERIFIER_HOME") %><br>
+        <%
+            if ( getServletContext().getInitParameter("HAPI_VERIFIER_HOME")==null ) {
+                out.print("(not specified, using /tmp/hapiVerifier/)");
+            }
+            %>
+          
         <h4>Version history</h4>
         <small>2017-06-15: somewhat useful.</small>
     </body>
