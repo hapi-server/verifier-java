@@ -16,5 +16,8 @@
         This verifies HAPI servers by running a suite of checks.<br>
         <a href="index.html">View last run</a><br>
         <a href="DoUpdate">Run tests</a><br>
+        
+        <h4>Version history</h4>
+        <small>2017-06-15: somewhat useful.</small>
     </body>
 </html>
