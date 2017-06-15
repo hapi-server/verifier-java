@@ -53,7 +53,11 @@ public class DoUpdate extends HttpServlet {
                 out.print("<body>");
                 out.print("Return to <a href='index.jsp'>home</a>" );
                 out.print("<h4>Log output from run:</h4>");
-                HapiVerifier.doAllServers( out, root, server, test );
+                if ( HapiVerifier.isRunning( root) ) {
+                    out.println("Busy running.  Old results are available <a href='index.html'>here</a>.");
+                } else {
+                    HapiVerifier.doAllServers( out, root, server, test );
+                }
                 
             } else {
                 out.println( "<body>" );
