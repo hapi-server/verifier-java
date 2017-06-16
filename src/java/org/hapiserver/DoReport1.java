@@ -39,9 +39,15 @@ public class DoReport1 extends HttpServlet {
         }
                 
         File root= new File(ROOT);
+        File f= new File(root,request.getServletPath() );
+        
+        if ( !f.exists() ) {
+            response.getWriter().write( "<body>This file is not found.  Return to <a href='index.jsp'>home</a></body>");
+            return;
+        }
         
         response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter();BufferedReader read= new BufferedReader( new FileReader(new File(root,request.getServletPath() ) ) ); ) {
+        try (PrintWriter out = response.getWriter();BufferedReader read= new BufferedReader( new FileReader( f ) ); ) {
             String s= read.readLine();
             while ( s!=null ) {
                 out.write(s);
