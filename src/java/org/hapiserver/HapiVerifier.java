@@ -16,6 +16,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -368,7 +369,66 @@ public class HapiVerifier {
             throw new IllegalArgumentException("unable to rename file to index.html");
         }
     }
+    
+    /**
+     * approximate the cadence specified as a duration in seconds.
+     * @param s
+     * @return
+     * @throws ParseException 
+     */
+    private static double cadenceSeconds( String s ) throws ParseException {
+        int[] ss= Util.parseISO8601Duration(s);
+        return ss[0]*86400*365 + ss[1]*86400*30 + ss[2]*86400 + ss[3]*3600 + ss[4]*60 + ss[5] + ss[6]/1e9;
+    }
 
+    /**
+     * 
+     * @param info
+     * @return
+     * @throws IllegalArgumentException
+     * @throws JSONException 
+     */
+    public static String[] getSampleRange(JSONObject info) throws IllegalArgumentException, JSONException {
+        String[] sampleRange=null;
+        
+        String startDate= info.getString("startDate");
+        String stopDate= info.getString("stopDate");
+        
+        int[] istartDate= Util.parseISO8601(startDate);
+        int[] istopDate= Util.parseISO8601(stopDate);
+        
+        if ( info.has("sampleStartDate") && info.has("sampleStopDate") ) {
+            sampleRange = new String[] { info.getString("sampleStartDate"), info.getString("sampleStopDate") } ;
+        }
+        
+        if ( sampleRange==null ) {
+            if ( info.has("cadence") ) {
+                try{
+                    System.arraycopy(istopDate, 0, istartDate, 0, 6);
+                    double cs= cadenceSeconds(info.getString("cadence"));
+                    if ( cs<1. ) {
+                        istartDate[4]-=1;
+                    } else if ( cs<60. ) {
+                        istartDate[3]-=1;
+                    } else if ( cs<3600. ) {
+                        istartDate[2]-=1;
+                    } else {
+                        istartDate[2]-=1;
+                    }
+                } catch ( ParseException ex ) {
+                    logger.log(Level.WARNING, "parse error in cadence: {0}", info.getString("cadence"));
+                }
+            } else {
+                System.arraycopy(istopDate, 0, istartDate, 0, 6);
+                istartDate[2]-=1;
+            }
+            istartDate= Util.normalizeTimeComponents(istartDate);
+            return new String[] { Util.formatISO8601Datum(istartDate), Util.formatISO8601Datum(istopDate) };
+        } else {
+            return sampleRange;
+        }
+    }
+    
     private static String makeHtml( String raw ) {
         StringBuilder builder= new StringBuilder();
         String[] ss= raw.split("\n");

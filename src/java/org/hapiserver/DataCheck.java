@@ -55,25 +55,25 @@ public class DataCheck extends Check {
         //String startDate= jo.getString("startDate");
         //String stopDate= jo.getString("stopDate");
         
+        String[] ss= HapiVerifier.getSampleRange(jo);        
+        
         String sampleStartDate;
         String sampleStopDate;
         if ( jo.has("sampleStopDate") ) {
             sampleStopDate= jo.getString("sampleStopDate");
         } else {
             if ( jo.has("sampleEndDate") ) {
+                logger.log(Level.INFO, "{0} from {1} has sampleEndDate, which should be sampleStopDate", new Object[] { id, hapi } );
                 sampleStopDate= jo.getString("sampleEndDate");
-                logger.log(Level.INFO, "{0} from {1}, has sampleEndDate, which should be sampleStopDate, using this.", new Object[] { id, hapi } );
             } else {
-                logger.log(Level.INFO, "test could not be performed for {0} from {1}, missing sampleStopDate", new Object[] { id, hapi } );
-                return new CheckStatus(0);
+                sampleStopDate= ss[1];
             }
         }
         
         if ( jo.has("sampleStartDate") ) {
             sampleStartDate= jo.getString("sampleStartDate");
         } else {
-            logger.log(Level.INFO, "test could not be performed {0} from {1}, missing sampleStartDate", new Object[] { id, hapi } );
-            return new CheckStatus(0);
+            sampleStartDate= ss[0];
         }
         
         return doCheck( id, sampleStartDate, sampleStopDate );
