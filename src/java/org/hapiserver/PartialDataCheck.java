@@ -71,7 +71,7 @@ public class PartialDataCheck extends Check {
         } else {
             if ( jo.has("sampleEndDate") ) {
                 logger.log(Level.INFO, "{0} from {1} has sampleEndDate, which should be sampleStopDate", new Object[] { id, hapi } );
-                return new CheckStatus(2);
+                sampleStopDate= jo.getString("sampleEndDate");
             } else {
                 logger.log(Level.INFO, "test could not be performed for {0} from {1}, missing sampleStopDate", new Object[] { id, hapi } );
                 return new CheckStatus(0);
