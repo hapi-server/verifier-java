@@ -51,6 +51,12 @@ public class DoUpdate extends HttpServlet {
                 String test= request.getParameter("test"); // might be null.
                 
                 out.print("<body>");
+                File newIndexFile= new File( root, "index.html.tmp" );
+                if ( newIndexFile.exists() ) {
+                    out.print("test appears to be running, because "+newIndexFile+" exists.<br>" );
+                } else {
+                    out.print("test system is idle.<br>" );
+                }
                 out.print("Return to <a href='index.jsp'>home</a>" );
                 out.print("<h4>Log output from run:</h4>");
                 if ( HapiVerifier.isRunning( root) ) {
@@ -61,6 +67,13 @@ public class DoUpdate extends HttpServlet {
                 
             } else {
                 out.println( "<body>" );
+                File newIndexFile= new File( root, "index.html.tmp" );
+                if ( newIndexFile.exists() ) {
+                    out.print("test appears to be running, because "+newIndexFile+" exists.<br>" );
+                } else {
+                    out.print("test system is idle.<br>" );
+                }
+                
                 out.print("Return to <a href='index.jsp'>home</a>" );
                 out.println( "<h4>Click to run test on all servers:</h4>");
                 out.println( "<small>this will take a while, and server will not respond nicely.</small><br>");
