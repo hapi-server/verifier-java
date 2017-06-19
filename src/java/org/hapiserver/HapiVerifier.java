@@ -349,6 +349,11 @@ public class HapiVerifier {
                             out2.println( "<h2>Log output</h2>");
                             out2.println( String.format( "<small>Test last run %s</small><br><br>", new java.util.Date(c.getTimeStamp()).toString() ) );
                             out2.println( makeHtml( c.getLog() ) );
+                            if ( c.getStatus()==0 ) {
+                                out2.println( "<img src='../blue.gif'>" );
+                            } else {
+                                out2.println( "<img src='../red.gif'>" );
+                            }
                             out2.println( c.getMessage() + "<br>");
                             out2.println( "<br>Return to <a href='../index.html'>summary</a><br><br><br>\n");
                         }
