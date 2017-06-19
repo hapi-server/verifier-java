@@ -350,7 +350,7 @@ public class HapiVerifier {
                             out2.println( String.format( "<small>Test last run %s</small><br><br>", new java.util.Date(c.getTimeStamp()).toString() ) );
                             out2.println( makeHtml( c.getLog() ) );
                             out2.println( c.getMessage() + "<br>");
-                            out2.println( "<br>Return to <a href='../index.html'>summary</a><br>\n");
+                            out2.println( "<br>Return to <a href='../index.html'>summary</a><br><br><br>\n");
                         }
                         
                         String ball= c.getStatus()==0 ? "blue" : "red";
