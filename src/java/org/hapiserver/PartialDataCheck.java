@@ -112,6 +112,7 @@ public class PartialDataCheck extends Check {
         jo.getString("status");
         JSONArray ja= jo.getJSONArray("catalog");
         int status= 0;
+        int failCount= 0;
         for ( int i=0; i<ja.length(); i++ ) {
             JSONObject jo1= ja.getJSONObject(i);
             String id= jo1.getString("id");
@@ -119,8 +120,11 @@ public class PartialDataCheck extends Check {
             if ( st1.getStatus()!=0 ) {
                 logger.log(Level.INFO, "<img src=''../red.gif''> test returns fail status: {0}<br>", id);
                 status=1;
+                failCount++;
             }
         }
+        CheckStatus result= new CheckStatus(status);
+        result.setMessage("number of failures: "+failCount);
         return new CheckStatus(status);
     }
     
