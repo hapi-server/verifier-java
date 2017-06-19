@@ -337,6 +337,11 @@ public class HapiVerifier {
                             out2.println( "<h2>" );
                             out2.println( "Test \""+e.getKey()+"\" on server "+ server );
                             out2.println( "</h2>" );
+                            if ( c.getStatus()==0 ) {
+                                out2.println( "<img src='../blue.gif'>" );
+                            } else {
+                                out2.println( "<img src='../red.gif'>" );
+                            }
                             out2.println( "Status Code=" + c.getStatus() + "<br>");
                             out2.println( c.getMessage() + "<br>");
                             out2.println( String.format( "<a href='../DoUpdate?test=%s&server=%s&action=go'>Rerun</a> test<br>", new Object[] { e.getKey(), server } ) );
@@ -344,6 +349,7 @@ public class HapiVerifier {
                             out2.println( "<h2>Log output</h2>");
                             out2.println( String.format( "<small>Test last run %s</small><br><br>", new java.util.Date(c.getTimeStamp()).toString() ) );
                             out2.println( makeHtml( c.getLog() ) );
+                            out2.println( c.getMessage() + "<br>");
                             out2.println( "<br>Return to <a href='../index.html'>summary</a><br>\n");
                         }
                         
