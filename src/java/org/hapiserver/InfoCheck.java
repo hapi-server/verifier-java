@@ -20,10 +20,10 @@ public class InfoCheck extends Check {
     private CheckStatus doCheck(String id) throws Exception {
         URL info= hapiURL( hapi, "info", Collections.singletonMap( "id", id ) );
         JSONObject jo= getJSONObject(info);
-        jo.getString("HAPI");
+        if ( !jo.has("HAPI") ) throw new IllegalArgumentException("tag HAPI should be string containing version");
         //jo.getString("status"); //TEMPORARY
-        jo.getString("startDate");
-        jo.getString("stopDate");
+        if ( !jo.has("startDate") ) throw new IllegalArgumentException("tag startDate should be a time like $Y-$m-$dT$H:$M:$S");
+        if ( !jo.has("stopDate") )  throw new IllegalArgumentException( "tag stopDate should be a time like $Y-$m-$dT$H:$M:$S");
         
         JSONArray ja= jo.getJSONArray("parameters");
         for ( int i=0; i<ja.length(); i++ ) {
