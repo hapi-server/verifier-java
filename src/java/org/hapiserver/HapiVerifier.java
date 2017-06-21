@@ -388,7 +388,7 @@ public class HapiVerifier {
      * @throws ParseException 
      */
     private static double cadenceSeconds( String s ) throws ParseException {
-        int[] ss= Util.parseISO8601Duration(s);
+        int[] ss= TimeUtil.parseISO8601Duration(s);
         return ss[0]*86400*365 + ss[1]*86400*30 + ss[2]*86400 + ss[3]*3600 + ss[4]*60 + ss[5] + ss[6]/1e9;
     }
 
@@ -405,8 +405,8 @@ public class HapiVerifier {
         String startDate= info.getString("startDate");
         String stopDate= info.getString("stopDate");
         
-        int[] istartDate= Util.parseISO8601(startDate);
-        int[] istopDate= Util.parseISO8601(stopDate);
+        int[] istartDate= TimeUtil.parseISO8601(startDate);
+        int[] istopDate= TimeUtil.parseISO8601(stopDate);
         
         if ( info.has("sampleStartDate") && info.has("sampleStopDate") ) {
             sampleRange = new String[] { info.getString("sampleStartDate"), info.getString("sampleStopDate") } ;
@@ -433,8 +433,8 @@ public class HapiVerifier {
                 System.arraycopy(istopDate, 0, istartDate, 0, 6);
                 istartDate[2]-=1;
             }
-            istartDate= Util.normalizeTimeComponents(istartDate);
-            return new String[] { Util.formatISO8601Datum(istartDate), Util.formatISO8601Datum(istopDate) };
+            istartDate= TimeUtil.normalizeTimeComponents(istartDate);
+            return new String[] { TimeUtil.formatISO8601Datum(istartDate), TimeUtil.formatISO8601Datum(istopDate) };
         } else {
             return sampleRange;
         }
