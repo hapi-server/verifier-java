@@ -57,6 +57,7 @@ public class DataWithHeaderCheck extends Check {
         } else {
             return new CheckStatus(1,"empty response");
         }
+        
     }
 
     private CheckStatus doCheck(String id) throws Exception {
