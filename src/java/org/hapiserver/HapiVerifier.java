@@ -55,7 +55,7 @@ public class HapiVerifier {
             return;
         }
         
-        logger.log(Level.INFO, "### {0} ###", check.toString());
+        logger.log(Level.INFO, "\n### {0} ###", check.toString());
         final StringBuilder b= new StringBuilder();
         Handler h= new Handler() {
             @Override
@@ -348,7 +348,7 @@ public class HapiVerifier {
                             out2.println( "<br>" );
                             out2.println( "<h2>Log output</h2>");
                             out2.println( String.format( "<small>Test last run %s</small><br><br>", new java.util.Date(c.getTimeStamp()).toString() ) );
-                            out2.println( makeHtml( c.getLog() ) );
+                            out2.println( HapiUtil.makeHtml( c.getLog() ) );
                             if ( c.getStatus()==0 ) {
                                 out2.println( "<img src='../blue.gif'>" );
                             } else {
@@ -380,7 +380,7 @@ public class HapiVerifier {
             throw new IllegalArgumentException("unable to rename file to index.html");
         }
     }
-    
+       
     private static String makeHtml( String raw ) {
         StringBuilder builder= new StringBuilder();
         String[] ss= raw.split("\n");
@@ -466,7 +466,9 @@ public class HapiVerifier {
             public void publish(LogRecord record) {
                 SimpleFormatter formatter= new SimpleFormatter();
                 String s= formatter.formatMessage(record);
-                out.append(s.replaceAll("\n","<br>"));
+                if ( s==null ) s= "<null>";
+                out.append( HapiUtil.makeHtml(s) );
+
                 out.append("<br>");
                 out.flush();
             }

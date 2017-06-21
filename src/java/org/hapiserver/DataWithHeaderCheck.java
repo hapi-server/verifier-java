@@ -12,6 +12,7 @@ import static org.hapiserver.Check.getJSONObject;
 import static org.hapiserver.Check.hapiURL;
 import static org.hapiserver.Check.logger;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -21,7 +22,7 @@ import org.json.JSONObject;
 public class DataWithHeaderCheck extends Check {
      
     public DataWithHeaderCheck( URL hapi ) {
-        super(hapi,"HeaderWithData");
+        super(hapi,"DataWithHeader");
     }
     
     private CheckStatus doCheck( String id, String parameters, String min, String max, int nf ) throws Exception {
@@ -34,32 +35,82 @@ public class DataWithHeaderCheck extends Check {
         URL data= hapiURL( hapi, "data", params );
         logger.log(Level.INFO, "opening {0}", data);
         
+        
         int actualFieldCount= -1;
         int len=0;
         StringBuilder b= new StringBuilder();
+        StringBuilder jsonB= new StringBuilder();
+        
         try ( BufferedReader read= new BufferedReader( new InputStreamReader(data.openStream()) ) ) {
             String s;
             while ( ( s=read.readLine() )!=null ) {
-                if ( actualFieldCount==-1 ) {
-                    actualFieldCount= s.split(",").length;
+                if ( s.startsWith("#") ) {
+                    jsonB.append(s.substring(1)).append("\n");
+                } else {
+                    if ( actualFieldCount==-1 ) {
+                        actualFieldCount= s.split(",").length;
+                    }
+                    b.append(s).append("\n");
+                    len+= 1;
                 }
-                b.append(s).append("\n");
-                len+= 1;
             }
         }
+        
+        StringBuilder errors= new StringBuilder();
+        
         logger.log(Level.INFO, "Records received: {0}", len);
         if ( len>0 ) {
             if ( actualFieldCount!=nf ) {
-                return new CheckStatus(2,"expected "+nf+" fields but got "+actualFieldCount );
-            } else {
-                return new CheckStatus(0);
-            }
+                errors.append("expected ").append(nf).append(" fields but got ").append(actualFieldCount).append("\n");
+            } 
         } else {
-            return new CheckStatus(1,"empty response");
+            errors.append("empty response").append("\n");
+        }
+        
+        try {
+            JSONObject jo= new JSONObject(jsonB.toString());
+            int actualNf= numberOfFields( jo, parameters );
+            if ( actualNf!=nf ) {
+                errors.append("expected number of fields implied by header is wrong.  Expected ").append(nf).append(" got ").append(actualNf).append("...\n");
+            }
+        } catch ( JSONException ex ) {
+            errors.append(ex.toString()).append("\n");
+        }
+        
+        if ( errors.length()==0 ) {
+            return new CheckStatus(0);
+        } else {
+            logger.info(errors.toString());
+            return new CheckStatus(2,errors.toString());
         }
         
     }
 
+    private static int numberOfFields( JSONObject jo, String params ) throws JSONException {
+        JSONArray arr= jo.getJSONArray("parameters");
+        
+        String[] ss= params.split(",");
+        
+        int nf= 0;
+        for ( int i=0; i<arr.length(); i++ ) {
+            JSONObject arr1= arr.getJSONObject(i);
+            String n= arr1.getString("name");
+            if ( params.contains(n) ) {
+                if ( arr1.has("size") ) {
+                    JSONArray size= arr1.getJSONArray("size");
+                    int p=1;
+                    for ( int j=0; j<size.length(); j++ ) p*= size.getInt(j);
+                    nf+= p;
+                } else {
+                    nf+= 1;
+                }
+            }
+        }
+
+        return nf;
+
+    }
+    
     private CheckStatus doCheck(String id) throws Exception {
         URL info= hapiURL( hapi, "info", Collections.singletonMap( "id", id ) );
         JSONObject jo= getJSONObject(info);        
@@ -70,15 +121,7 @@ public class DataWithHeaderCheck extends Check {
             return new CheckStatus(0);
         } else {
             String parameters= arr.getJSONObject(0).getString("name") + "," + arr.getJSONObject(1).getString("name");
-            int nf= 1;
-            if ( arr.getJSONObject(1).has("size") ) {
-                JSONArray size= arr.getJSONObject(1).getJSONArray("size");
-                int p=1;
-                for ( int j=0; j<size.length(); j++ ) p*= size.getInt(j);
-                nf+= p;
-            } else {
-                nf+= 1;
-            }
+            int nf= numberOfFields(jo,parameters);
             return doCheck( id, parameters, ss[0], ss[1], nf );
         }
 

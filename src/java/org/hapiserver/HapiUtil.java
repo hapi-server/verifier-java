@@ -12,6 +12,8 @@ import java.text.ParseException;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -121,5 +123,25 @@ public class HapiUtil {
         }
     }
     
-    
+    public static String makeHtml( String raw ) {
+        StringBuilder builder= new StringBuilder();
+        String[] ss= raw.split("\n");
+        Pattern url= Pattern.compile("(http|ftp|https):\\/\\/[\\w\\-_]+(\\.[\\w\\-_]+)+([\\w\\-\\.,@?^=%&amp;:/~\\+#]*[\\w\\-\\@?^=%&amp;/~\\+#])?");
+        
+        for ( String s: ss ) {
+            Matcher m= url.matcher(s);
+            int more= 0;
+            while ( m.find() ) {
+                builder.append( s.substring(0,m.start()) );
+                more= m.end();
+                String surl= s.substring(m.start(),more);
+                builder.append("<a href='").append(surl).append("'>").append(surl.replaceAll("\\&", "&amp;") ).append("</a>");
+            }
+            builder.append( s.substring(more) ); // I know there's a matcher field for this, just can't find it...
+            builder.append( "<br>\n");
+        }
+        
+        return builder.toString();
+    }
+
 }
