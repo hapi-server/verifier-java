@@ -2,6 +2,8 @@
 package org.hapiserver;
 
 import java.text.ParseException;
+import java.util.Arrays;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,6 +13,7 @@ import java.util.regex.Pattern;
  * @author jbf
  */
 public class Util {
+    
     private static final String SIMPLE_FLOAT= "\\d?\\.?\\d+";
     public static final String ISO8601_DURATION= "P(\\d+Y)?(\\d+M)?(\\d+D)?(T(\\d+H)?(\\d+M)?("+SIMPLE_FLOAT+"S)?)?";
     public static final Pattern ISO8601_DURATION_PATTERN= Pattern.compile(ISO8601_DURATION);
@@ -126,28 +129,223 @@ public class Util {
         return components;
         
     }
-        
     
-    private static Pattern TIME1, TIME2, TIME3, TIME4 ,TIME5, TIME6;
-    static {
-        String d= "[-:]"; // delim
-        String i4= "(\\d\\d\\d\\d)";
-        String i3= "(\\d+)";
-        String i2= "(\\d\\d)";
-        String tz= "((\\+|\\-)(\\d\\d)(:?(\\d\\d))?)"; // Note UTC allows U+2212 as well as dash.
+    /**
+     * new attempt to write a clean ISO8601 parser.  This should also parse 02:00
+     * in the context of 2010-002T00:00/02:00.  This does not support 2-digit years, which
+     * were removed in ISO 8601:2004.
+     * 
+     * @param str the ISO8601 string
+     * @param result the datum, decomposed into [year,month,day,hour,minute,second,nano]
+     * @param lsd -1 or the current position 
+     * @return the lsd least significant digit
+     */
+    public static int parseISO8601Datum( String str, int[] result, int lsd ) {
+        StringTokenizer st= new StringTokenizer( str, "-T:.Z+", true );
+        Object dir= null;
+        final Object DIR_FORWARD = "f";
+        final Object DIR_REVERSE = "r";
+        int want= 0;
+        boolean haveDelim= false;
+        boolean afterT= false;
+        while ( st.hasMoreTokens() ) {
+            char delim= ' ';
+            if ( haveDelim ) {
+                delim= st.nextToken().charAt(0);
+                if ( delim=='T' ) afterT= true;
+                if ( afterT && ( delim=='-' || delim=='+' ) ) { // Time offset
+                    StringBuilder toff= new StringBuilder( String.valueOf(delim) );
+                    while ( st.hasMoreElements() ) {
+                        toff.append(st.nextToken());
+                    }
+                    int deltaHours= Integer.parseInt(toff.substring(0,3));
+                    switch ( toff.length() ) {
+                        case 6: 
+                            result[3]-= deltaHours;
+                            result[4]-= Math.signum(deltaHours) * Integer.parseInt(toff.substring(4) );
+                            break;
+                        case 5: 
+                            result[3]-= deltaHours;
+                            result[4]-= Math.signum(deltaHours) * Integer.parseInt(toff.substring(3) );
+                            break;
+                        case 3:
+                            result[3]-= deltaHours;
+                            break;
+                        default:
+                            throw new IllegalArgumentException("malformed time zone designator: "+str);
+                    }
+                    normalizeTimeComponents(result);
+                    break;
+                }
+                if ( st.hasMoreElements()==false ) { // "Z"
+                    break;
+                }
+            } else {
+                haveDelim= true;
+            }
+            String tok= st.nextToken();
+            if ( dir==null ) {
+                switch (tok.length()) {
+                    case 4:
+                        // typical route
+                        int iyear= Integer.parseInt( tok );
+                        result[0]= iyear;
+                        want= 1;
+                        dir=DIR_FORWARD;
+                        break;
+                    case 6:
+                        want= lsd;
+                        if ( want!=6 ) throw new IllegalArgumentException("lsd must be 6");
+                        result[want]= Integer.parseInt( tok.substring(0,2) );
+                        want--;
+                        result[want]= Integer.parseInt( tok.substring(2,4) );
+                        want--;
+                        result[want]= Integer.parseInt( tok.substring(4,6) );
+                        want--;
+                        dir=DIR_REVERSE;
+                        break;
+                    case 7:
+                        result[0]= Integer.parseInt( tok.substring(0,4) );
+                        result[1]= 1;
+                        result[2]= Integer.parseInt( tok.substring(4,7) );
+                        want= 3;
+                        dir=DIR_FORWARD;
+                        break;
+                    case 8:
+                        result[0]= Integer.parseInt( tok.substring(0,4) );
+                        result[1]= Integer.parseInt( tok.substring(4,6) );
+                        result[2]= Integer.parseInt( tok.substring(6,8) );
+                        want= 3;
+                        dir=DIR_FORWARD;
+                        break;
+                    default:
+                        dir= DIR_REVERSE;
+                        want= lsd;  // we are going to have to reverse these when we're done.
+                        int i= Integer.parseInt( tok );
+                        result[want]= i;
+                        want--;
+                        break;
+                }
+            } else if ( dir==DIR_FORWARD) {
+                if ( want==1 && tok.length()==3 ) { // $j
+                    result[1]= 1;
+                    result[2]= Integer.parseInt( tok ); 
+                    want= 3;
+                } else if ( want==3 && tok.length()==6 ) {
+                    result[want]= Integer.parseInt( tok.substring(0,2) );
+                    want++;
+                    result[want]= Integer.parseInt( tok.substring(2,4) );
+                    want++;
+                    result[want]= Integer.parseInt( tok.substring(4,6) );
+                    want++;
+                } else if ( want==3 && tok.length()==4 ) {
+                    result[want]= Integer.parseInt( tok.substring(0,2) );
+                    want++;
+                    result[want]= Integer.parseInt( tok.substring(2,4) );
+                    want++;
+                } else {
+                    int i= Integer.parseInt( tok );
+                    if ( delim=='.' && want==6 ) {
+                        int n= 9-tok.length();
+                        result[want]= i * ((int)Math.pow(10,n));
+                    } else {
+                        result[want]= i;
+                    }
+                    want++;
+                }
+            } else if ( dir==DIR_REVERSE ) { // what about 1200 in reverse?
+                int i= Integer.parseInt( tok ); 
+                if ( delim=='.' ) {
+                    int n= 9-tok.length();
+                    result[want]= i * ((int)Math.pow(10,n));
+                } else {
+                    result[want]= i;
+                }
+                want--;
+            }
+        }
+        
+        if ( dir==DIR_REVERSE ) {
+            int iu= want+1;
+            int id= lsd;
+            while( iu<id ) {
+                int t= result[iu];
+                result[iu]= result[id];
+                result[id]= t;
+                iu= iu+1;
+                id= id-1;
+            }
+        } else {
+            lsd= want-1;
+        }
+        
+        return lsd;
+    }
 
-        String iso8601time= i4 + d + i2 + d + i2 + "T" + i2 + d + i2 + "((" + d + i2 + "(\\." + i3 + ")?)?)Z?" ;  // "2012-03-27T12:22:36.786Z"
-        String iso8601time2= i4 + i2 + i2 + "T" + i2 + i2 + "(" + i2 + ")?Z?" ;
-        String iso8601time3= i4 + d + i3 + "T" + i2 + d + i2 + "(" + i2 + ")?Z?" ;
-        String iso8601time4= i4 + d + i2 + d + i2 + "Z?" ;
-        String iso8601time5= i4 + d + i3 + "Z?" ;
-        String iso8601time6= i4 + d + i2 + d + i2 + "T" + i2 + d + i2 + "((" + d + i2 + "(\\." + i3 + ")?)?)"+tz+"?" ;  // "2014-09-02T10:55:10-05:00"
-        TIME1= Pattern.compile(iso8601time);
-        TIME2= Pattern.compile(iso8601time2);
-        TIME3= Pattern.compile(iso8601time3);
-        TIME4= Pattern.compile(iso8601time4);
-        TIME5= Pattern.compile(iso8601time5);
-        TIME6= Pattern.compile(iso8601time6);
+    
+    /**
+     * returns the time found in an ISO8601 string.  This supports
+     * periods (durations) as in: 2007-03-01T13:00:00Z/P1Y2M10DT2H30M
+     * Other examples:<ul>
+     *   <li>2007-03-01T13:00:00Z/2008-05-11T15:30:00Z
+     *   <li>2007-03-01T13:00:00Z/P1Y2M10DT2H30M
+     *   <li>P1Y2M10DT2H30M/2008-05-11T15:30:00Z
+     *   <li>2007-03-01T00:00Z/P1D
+     *   <li>2012-100T02:00/03:45
+     * </ul>
+     * http://en.wikipedia.org/wiki/ISO_8601#Time_intervals
+     * @param stringIn the time range
+     * @return int[12], [ Y m d H M S nanos Y m d H M S nanos ]
+     * @throws java.text.ParseException
+     */
+    public static int[] parseISO8601Range( String stringIn ) throws ParseException {
+
+        String[] parts= stringIn.split("/",-2);
+        if ( parts.length!=2 ) return null;
+
+        boolean d1= parts[0].charAt(0)=='P'; // true if it is a duration
+        boolean d2= parts[1].charAt(0)=='P';
+
+        int[] digits0;
+        int[] digits1;
+        int lsd= -1;
+
+        if ( d1 ) {
+            digits0= parseISO8601Duration( parts[0] );
+        } else {
+            digits0= new int[7];
+            lsd= parseISO8601Datum( parts[0], digits0, lsd );
+            for ( int j=lsd+1; j<3; j++ ) digits0[j]=1; // month 1 is first month, not 0. day 1 
+        }
+
+        if ( d2 ) {
+            digits1= parseISO8601Duration(parts[1]);
+        } else {
+            if ( d1 ) {
+                digits1= new int[7];
+            } else {
+                digits1= Arrays.copyOf( digits0, digits0.length );
+            }
+            lsd= parseISO8601Datum( parts[1], digits1, lsd );
+            for ( int j=lsd+1; j<3; j++ ) digits1[j]=1; // month 1 is first month, not 0. day 1 
+        }
+
+        if ( digits0==null || digits1==null ) return null;
+        
+        if ( d1 ) {
+            for ( int i=0; i<7; i++ ) digits0[i] = digits1[i] - digits0[i];
+        }
+
+        if ( d2 ) {
+            for ( int i=0; i<7; i++ ) digits1[i] = digits0[i] + digits1[i];
+        }
+
+        int[] result= new int[12];
+        System.arraycopy( digits0, 0, result, 0, 6 );
+        System.arraycopy( digits1, 0, result, 6, 6 );
+        
+        return result;
+
     }
     
     /**
@@ -157,63 +355,13 @@ public class Util {
      * "2012-03-27T12:22:36.786Z"
      * "2012-03-27T12:22:36"
      * (and some others) TODO: enumerate and test.
-     * TODO: this should use parseISO8601Datum.
      * @param str iso8601 string.
      * @return null or int[7]: [ Y, m, d, H, M, S, nano ]
      */
     public static int[] parseISO8601 ( String str ) {
-
-        Matcher m;
-
-        m= TIME1.matcher(str);
-        if ( m.matches() ) {
-            String sf= m.group(10);
-            if ( sf!=null && sf.length()>9 ) throw new IllegalArgumentException("too many digits in nanoseconds part");
-            int nanos= sf==null ? 0 : ( Integer.parseInt(sf) * (int)Math.pow( 10, ( 9 - sf.length() ) ) );
-            return new int[] { Integer.parseInt( m.group(1) ), Integer.parseInt( m.group(2) ), Integer.parseInt( m.group(3) ), getInt( m.group(4), 0 ), getInt( m.group(5), 0 ), getInt( m.group(8), 0), nanos };
-        } else {
-            m= TIME2.matcher(str);
-            if ( m.matches() ) {
-                return new int[] { Integer.parseInt( m.group(1) ), Integer.parseInt( m.group(2) ), Integer.parseInt( m.group(3) ), getInt( m.group(4), 0 ), getInt( m.group(5), 0 ), getInt( m.group(7), 0), 0 };
-            } else {
-                m= TIME3.matcher(str);
-                if ( m.matches() ) {
-                    return new int[] { Integer.parseInt( m.group(1) ), 1, Integer.parseInt( m.group(2) ), getInt( m.group(3), 0 ), getInt( m.group(4), 0 ), getInt( m.group(5), 0), 0 };
-                } else {
-                    m= TIME4.matcher(str);
-                    if ( m.matches() ) {
-                        return new int[] { Integer.parseInt( m.group(1) ), Integer.parseInt( m.group(2) ), getInt( m.group(3), 0 ), 0, 0, 0, 0 };
-                    } else {
-                        m= TIME5.matcher(str);
-                        if ( m.matches() ) {
-                            return new int[] { Integer.parseInt( m.group(1) ), 1, Integer.parseInt( m.group(2) ), 0, 0, 0, 0 };
-                        } else {
-                            m= TIME6.matcher(str);
-                            if ( m.matches() ) {
-                                String sf= m.group(10);
-                                if ( sf!=null && sf.length()>9 ) throw new IllegalArgumentException("too many digits in nanoseconds part");
-                                int nanos= sf==null ? 0 : ( Integer.parseInt(sf) * (int)Math.pow( 10, ( 9 - sf.length() ) ) );
-                                String plusMinus= m.group(12);
-                                String tzHours= m.group(13);
-                                String tzMinutes= m.group(15);
-                                int[] result;
-                                if ( plusMinus.charAt(0)=='+') {
-                                    result= new int[] { Integer.parseInt( m.group(1) ), Integer.parseInt( m.group(2) ), Integer.parseInt( m.group(3) ), 
-                                        getInt( m.group(4), 0 ) - getInt( tzHours,0 ), getInt( m.group(5), 0 )- getInt( tzMinutes, 0 ),
-                                        getInt( m.group(8), 0), nanos };
-                                } else {
-                                    result= new int[] { Integer.parseInt( m.group(1) ), Integer.parseInt( m.group(2) ), Integer.parseInt( m.group(3) ), 
-                                        getInt( m.group(4), 0 ) + getInt( tzHours,0 ), getInt( m.group(5), 0 ) + getInt( tzMinutes, 0 ),
-                                        getInt( m.group(8), 0) , nanos };
-                                }
-                                return normalizeTimeComponents(result);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return null;
+        int[] result= new int[7];
+        int r= parseISO8601Datum( str, result, 0 );
+        return result;
     }
 
     private static int getInt( String val, int deft ) {
@@ -252,6 +400,21 @@ public class Util {
             return String.format( "%04d-%02d-%02dT%02d:%02d:%02dZ", result[0], result[1], result[2], result[3], result[4], result[5] );
         } else {
             return String.format( "%04d-%02d-%02dT%02d:%02dZ", result[0], result[1], result[2], result[3], result[4] );
+        }
+    }
+    
+    /**
+     * for convenience, this formats the decomposed time range.
+     * @param result seven-element time [ Y,m,d,H,M,S,nanos, Y,m,d,H,M,S,nanos ] 
+     * @return formatted time range
+     */
+    public static String formatISO8601Range( int[] result ) {
+        String t0= formatISO8601Datum( java.util.Arrays.copyOfRange( result, 0,7 ) );
+        String t1= formatISO8601Datum( java.util.Arrays.copyOfRange( result, 7,7 ) );
+        if ( t0.substring(0,10).equals(t1.substring(0,10) ) ) {
+            return t0 + "/" + t1.substring(11);
+        } else {
+            return t0 + "/" + t1;
         }
     }
 
