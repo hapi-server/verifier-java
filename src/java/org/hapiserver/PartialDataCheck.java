@@ -64,7 +64,7 @@ public class PartialDataCheck extends Check {
         //String startDate= jo.getString("startDate");
         //String stopDate= jo.getString("stopDate");
         
-        String[] ss= HapiVerifier.getSampleRange(jo);        
+        String[] ss= HapiUtil.getSampleRange(jo);        
         
         String sampleStartDate;
         String sampleStopDate;

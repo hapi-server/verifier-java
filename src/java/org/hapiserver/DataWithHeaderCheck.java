@@ -1,7 +1,6 @@
 
 package org.hapiserver;
 
-import static org.hapiserver.Check.hapiURL;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -9,76 +8,81 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
+import static org.hapiserver.Check.getJSONObject;
+import static org.hapiserver.Check.hapiURL;
+import static org.hapiserver.Check.logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * verify data request for example times.
+ *
  * @author jbf
  */
-public class DataCheck extends Check {
-    
-    public DataCheck( URL hapi ) {
-        super(hapi,"data");
+public class DataWithHeaderCheck extends Check {
+     
+    public DataWithHeaderCheck( URL hapi ) {
+        super(hapi,"HeaderWithData");
     }
     
-    private CheckStatus doCheck( String id, String min, String max ) throws Exception {
+    private CheckStatus doCheck( String id, String parameters, String min, String max, int nf ) throws Exception {
         Map<String,String> params= new LinkedHashMap<>();
         params.put( "id", id );
         params.put( "time.min", min );
         params.put( "time.max", max );
+        params.put( "parameters", parameters );
+        params.put( "include", "header" );
         URL data= hapiURL( hapi, "data", params );
         logger.log(Level.INFO, "opening {0}", data);
         
+        int actualFieldCount= -1;
         int len=0;
         StringBuilder b= new StringBuilder();
         try ( BufferedReader read= new BufferedReader( new InputStreamReader(data.openStream()) ) ) {
             String s;
             while ( ( s=read.readLine() )!=null ) {
+                if ( actualFieldCount==-1 ) {
+                    actualFieldCount= s.split(",").length;
+                }
                 b.append(s).append("\n");
                 len+= 1;
             }
         }
         logger.log(Level.INFO, "Records received: {0}", len);
         if ( len>0 ) {
-            return new CheckStatus(0);
+            if ( actualFieldCount!=nf ) {
+                return new CheckStatus(2,"expected "+nf+" fields but got "+actualFieldCount );
+            } else {
+                return new CheckStatus(0);
+            }
         } else {
             return new CheckStatus(1,"empty response");
         }
     }
-    
+
     private CheckStatus doCheck(String id) throws Exception {
-        URL info= hapiURL( hapi, "info", Collections.singletonMap( "id",id ) );
-        JSONObject jo= getJSONObject(info);
-        jo.getString("HAPI");
-        //jo.getString("status"); //TEMPORARY
-        //String startDate= jo.getString("startDate");
-        //String stopDate= jo.getString("stopDate");
-        
+        URL info= hapiURL( hapi, "info", Collections.singletonMap( "id", id ) );
+        JSONObject jo= getJSONObject(info);        
         String[] ss= HapiUtil.getSampleRange(jo);        
+        JSONArray arr= jo.getJSONArray("parameters");
         
-        String sampleStartDate;
-        String sampleStopDate;
-        if ( jo.has("sampleStopDate") ) {
-            sampleStopDate= jo.getString("sampleStopDate");
+        if ( arr.length()<2 ) {
+            return new CheckStatus(0);
         } else {
-            if ( jo.has("sampleEndDate") ) {
-                logger.log(Level.INFO, "{0} from {1} has sampleEndDate, which should be sampleStopDate", new Object[] { id, hapi } );
-                sampleStopDate= jo.getString("sampleEndDate");
+            String parameters= arr.getJSONObject(0).getString("name") + "," + arr.getJSONObject(1).getString("name");
+            int nf= 1;
+            if ( arr.getJSONObject(1).has("size") ) {
+                JSONArray size= arr.getJSONObject(1).getJSONArray("size");
+                int p=1;
+                for ( int j=0; j<size.length(); j++ ) p*= size.getInt(j);
+                nf+= p;
             } else {
-                sampleStopDate= ss[1];
+                nf+= 1;
             }
+            return doCheck( id, parameters, ss[0], ss[1], nf );
         }
-        
-        if ( jo.has("sampleStartDate") ) {
-            sampleStartDate= jo.getString("sampleStartDate");
-        } else {
-            sampleStartDate= ss[0];
-        }
-        
-        return doCheck( id, sampleStartDate, sampleStopDate );
-        
+
     }
+    
     
     @Override
     public CheckStatus doCheck() throws Exception {
@@ -101,7 +105,7 @@ public class DataCheck extends Check {
         }
         CheckStatus result= new CheckStatus(status);
         result.setMessage("number of failures: "+failCount);
-        return result;
+        return new CheckStatus(status);
     }
     
 }
