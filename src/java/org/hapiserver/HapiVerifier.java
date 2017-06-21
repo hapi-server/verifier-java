@@ -564,6 +564,7 @@ public class HapiVerifier {
                 String s= formatter.formatMessage(record);
                 out.append(s.replaceAll("\n","<br>"));
                 out.append("<br>");
+                out.flush();
             }
 
             @Override
@@ -575,7 +576,7 @@ public class HapiVerifier {
             }
         });
         doAllServers(root);
-        out.close();
+        
     }
     
     /**

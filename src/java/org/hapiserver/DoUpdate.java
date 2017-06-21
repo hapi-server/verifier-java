@@ -65,6 +65,13 @@ public class DoUpdate extends HttpServlet {
                     HapiVerifier.doAllServers( out, root, server, test );
                 }
                 
+                if ( test!=null && server!=null ) {
+                    String testOutput= HapiVerifier.serverFolderName(new URL(server)) + "/" + test + ".html";
+                    out.println( String.format( "<br>Return to <a href='%s'>test output</a><br>", testOutput ) );
+                }
+                
+                out.println( "</body>" );
+                
             } else {
                 out.println( "<body>" );
                 File newIndexFile= new File( root, "index.html.tmp" );
