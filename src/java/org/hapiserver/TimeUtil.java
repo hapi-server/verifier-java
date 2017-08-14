@@ -4,6 +4,7 @@ package org.hapiserver;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.StringTokenizer;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,6 +14,8 @@ import java.util.regex.Pattern;
  * @author jbf
  */
 public class TimeUtil {
+    
+    private static Logger logger= Logger.getLogger("org.hapiserver.timeutil");
     
     private static final String SIMPLE_FLOAT= "\\d?\\.?\\d+";
     public static final String ISO8601_DURATION= "P(\\d+Y)?(\\d+M)?(\\d+D)?(T(\\d+H)?(\\d+M)?("+SIMPLE_FLOAT+"S)?)?";
@@ -295,7 +298,7 @@ public class TimeUtil {
      * </ul>
      * http://en.wikipedia.org/wiki/ISO_8601#Time_intervals
      * @param stringIn the time range
-     * @return int[12], [ Y m d H M S nanos Y m d H M S nanos ]
+     * @return int[14], [ Y m d H M S nanos Y m d H M S nanos ]
      * @throws java.text.ParseException
      */
     public static int[] parseISO8601Range( String stringIn ) throws ParseException {
@@ -340,9 +343,9 @@ public class TimeUtil {
             for ( int i=0; i<7; i++ ) digits1[i] = digits0[i] + digits1[i];
         }
 
-        int[] result= new int[12];
-        System.arraycopy( digits0, 0, result, 0, 6 );
-        System.arraycopy( digits1, 0, result, 6, 6 );
+        int[] result= new int[14];
+        System.arraycopy( digits0, 0, result, 0, 7 );
+        System.arraycopy( digits1, 0, result, 7, 7 );
         
         return result;
 
@@ -404,18 +407,70 @@ public class TimeUtil {
     }
     
     /**
-     * for convenience, this formats the decomposed time range.
-     * @param result seven-element time [ Y,m,d,H,M,S,nanos, Y,m,d,H,M,S,nanos ] 
+     * 6-element array of unit labels for each digit.  See https://en.wikipedia.org/wiki/ISO_8601#Durations
+     */
+    private static final String[] UNITS = new String[] { "Y", "M", "D", "H", "M", "S" }; // note nanoseconds must use special code.
+    
+    /**
+     * for convenience, this formats the decomposed time range.  This may take
+     * advantage of some ISO8601 range efficiencies, like:<ul>
+     * <li>start time and end time on the same day: (2019-08-14T00:00Z/02:34Z)
+     * <li>start time and end time differ by one component: (2019-08-14T12:00Z/PT1H)
+     * </ul>
+     * @param trarray fourteen-element time [ Y,m,d,H,M,S,nanos, Y,m,d,H,M,S,nanos ] 
      * @return formatted time range
      */
-    public static String formatISO8601Range( int[] result ) {
-        String t0= formatISO8601Datum( java.util.Arrays.copyOfRange( result, 0,7 ) );
-        String t1= formatISO8601Datum( java.util.Arrays.copyOfRange( result, 7,7 ) );
-        if ( t0.substring(0,10).equals(t1.substring(0,10) ) ) {
-            return t0 + "/" + t1.substring(11);
-        } else {
-            return t0 + "/" + t1;
+    public static String formatISO8601Range( int[] trarray ) {
+        String t0= formatISO8601Datum( java.util.Arrays.copyOfRange( trarray, 0,7 ) );
+        int differenceDigit= -1;
+        int difference= -999;
+        for ( int i=0; i<7; i++ ) {
+            if ( trarray[i]!=trarray[i+7] ) {
+                if ( differenceDigit==-1 ) {
+                    differenceDigit= i;
+                    difference= trarray[i+7] - trarray[i];
+                } else {
+                    differenceDigit= 999;
+                }
+            }
         }
+        
+        switch (differenceDigit) {
+            case -1:
+                logger.finer("no differences found.");
+                return t0 + "/PT0H" ;
+            case 0:
+            case 1:
+            case 2:
+                return t0 + "/P"+ difference + UNITS[differenceDigit];
+            case 3:
+            case 4:
+            case 5:
+                return t0 + "/PT"+ difference + UNITS[differenceDigit];
+            case 6:
+                return t0 + "/PT"+ (difference/1e9) + "S";
+            default:
+                String t1= formatISO8601Datum( java.util.Arrays.copyOfRange( trarray, 7,14 ) );
+                if ( t0.substring(0,10).equals(t1.substring(0,10) ) ) {
+                    return t0 + "/" + t1.substring(11);
+                } else {
+                    return t0 + "/" + t1;
+                }
+        }
+        
     }
 
+    public static void main( String[] args ) throws ParseException {
+        int[] dd;
+        dd= parseISO8601Range("2017-08-14T00:00Z/2019-08-16T01:02Z");
+        System.err.println( formatISO8601Range(dd) );
+        dd= parseISO8601Range("2017-08-14T00:00Z/2017-08-16T01:02:04.123Z");
+        System.err.println( formatISO8601Range(dd) );
+        dd= parseISO8601Range("2017-08-14T00:00Z/02:34Z");
+        System.err.println( formatISO8601Range(dd) );
+        dd= parseISO8601Range("2017-08-14T12:00Z/PT1H");
+        System.err.println( formatISO8601Range(dd) );
+        dd= parseISO8601Range("2017-08-14T12:00Z/P0D");
+        System.err.println( formatISO8601Range(dd) );
+    }
 }
